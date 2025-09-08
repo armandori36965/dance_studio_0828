@@ -1,0 +1,138 @@
+<?php
+
+return [
+    'general' => [
+        'created' => ':model 已成功建立',
+        'updated' => ':model 已成功更新',
+        'deleted' => ':model 已成功刪除',
+        'restored' => ':model 已成功恢復',
+        'saved' => ':model 已成功儲存',
+        'cancelled' => ':model 已取消',
+        'confirmed' => ':model 已確認',
+        'rejected' => ':model 已拒絕',
+        'approved' => ':model 已核准',
+        'submitted' => ':model 已提交',
+        'processed' => ':model 已處理',
+        'completed' => ':model 已完成',
+        'failed' => ':model 處理失敗',
+        'error' => '操作失敗，請稍後再試',
+        'success' => '操作成功',
+        'warning' => '操作警告',
+        'info' => '操作資訊',
+    ],
+
+    'users' => [
+        'created' => '用戶已成功建立',
+        'updated' => '用戶資料已成功更新',
+        'deleted' => '用戶已成功刪除',
+        'password_changed' => '密碼已成功變更',
+        'profile_updated' => '個人資料已成功更新',
+        'login_success' => '登入成功',
+        'logout_success' => '登出成功',
+        'account_locked' => '帳戶已被鎖定',
+        'account_unlocked' => '帳戶已解除鎖定',
+        'permissions_updated' => '權限已成功更新',
+        'role_assigned' => '角色已成功分配',
+        'role_removed' => '角色已成功移除',
+    ],
+
+    'courses' => [
+        'created' => '課程已成功建立',
+        'updated' => '課程資料已成功更新',
+        'deleted' => '課程已成功刪除',
+        'enrolled' => '已成功報名課程',
+        'unenrolled' => '已成功取消報名',
+        'completed' => '課程已完成',
+        'cancelled' => '課程已取消',
+        'full' => '課程已額滿',
+        'enrollment_opened' => '課程報名已開放',
+        'enrollment_closed' => '課程報名已截止',
+    ],
+
+    'equipment' => [
+        'created' => '設備已成功建立',
+        'updated' => '設備資料已成功更新',
+        'deleted' => '設備已成功刪除',
+        'borrowed' => '設備已成功借用',
+        'returned' => '設備已成功歸還',
+        'maintenance_scheduled' => '設備維護已排程',
+        'maintenance_completed' => '設備維護已完成',
+        'out_of_service' => '設備已停用',
+        'back_in_service' => '設備已恢復使用',
+    ],
+
+    'attendances' => [
+        'recorded' => '出勤記錄已成功建立',
+        'updated' => '出勤記錄已成功更新',
+        'deleted' => '出勤記錄已成功刪除',
+        'marked_present' => '已標記為出席',
+        'marked_absent' => '已標記為缺席',
+        'marked_late' => '已標記為遲到',
+        'excused' => '已標記為請假',
+        'confirmed' => '出勤記錄已確認',
+    ],
+
+    'campuses' => [
+        'created' => '校區已成功建立',
+        'updated' => '校區資料已成功更新',
+        'deleted' => '校區已成功刪除',
+        'activated' => '校區已啟用',
+        'deactivated' => '校區已停用',
+        'maintenance_mode' => '校區已進入維護模式',
+        'maintenance_completed' => '校區維護已完成',
+    ],
+
+    'finances' => [
+        'payment_received' => '付款已收到',
+        'payment_processed' => '付款已處理',
+        'payment_failed' => '付款處理失敗',
+        'refund_issued' => '退款已發放',
+        'invoice_generated' => '發票已產生',
+        'receipt_sent' => '收據已發送',
+        'payment_reminder' => '付款提醒已發送',
+        'overdue_notice' => '逾期通知已發送',
+    ],
+
+    'events' => [
+        'created' => '事件已成功建立',
+        'updated' => '事件資料已成功更新',
+        'deleted' => '事件已成功刪除',
+        'published' => '事件已發布',
+        'unpublished' => '事件已取消發布',
+        'registration_opened' => '事件報名已開放',
+        'registration_closed' => '事件報名已截止',
+        'reminder_sent' => '事件提醒已發送',
+    ],
+
+    'system' => [
+        'backup_created' => '系統備份已建立',
+        'backup_restored' => '系統備份已恢復',
+        'maintenance_mode_enabled' => '維護模式已啟用',
+        'maintenance_mode_disabled' => '維護模式已停用',
+        'update_available' => '系統更新可用',
+        'update_installed' => '系統更新已安裝',
+        'cache_cleared' => '快取已清除',
+        'settings_updated' => '系統設定已更新',
+    ],
+
+    'email' => [
+        'sent' => '電子郵件已發送',
+        'failed' => '電子郵件發送失敗',
+        'queued' => '電子郵件已加入佇列',
+        'delivered' => '電子郵件已送達',
+        'bounced' => '電子郵件退回',
+        'spam_reported' => '電子郵件被標記為垃圾郵件',
+    ],
+
+    'import_export' => [
+        'import_started' => '匯入已開始',
+        'import_completed' => '匯入已完成',
+        'import_failed' => '匯入失敗',
+        'export_started' => '匯出已開始',
+        'export_completed' => '匯出已完成',
+        'export_failed' => '匯出失敗',
+        'file_uploaded' => '檔案已上傳',
+        'file_processed' => '檔案已處理',
+    ],
+];
+
