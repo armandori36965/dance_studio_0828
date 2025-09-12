@@ -101,7 +101,6 @@ return [
         'unpublished' => '事件已取消發布',
         'registration_opened' => '事件報名已開放',
         'registration_closed' => '事件報名已截止',
-        'reminder_sent' => '事件提醒已發送',
     ],
 
     'system' => [

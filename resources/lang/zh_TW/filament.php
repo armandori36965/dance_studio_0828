@@ -155,6 +155,13 @@ return [
 
     ],
 
+    'modals' => [
+        'view' => '檢視 :label',
+        'edit' => '編輯 :label',
+        'create' => '新增 :label',
+        'delete' => '刪除 :label',
+    ],
+
     'actions' => [
 
         'create' => [

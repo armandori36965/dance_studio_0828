@@ -16,6 +16,10 @@ class SystemSettingsTable
     {
         return $table
             ->columns([
+                TextColumn::make('sort_order')
+                    ->label('排序')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // 設定鍵名欄位
                 TextColumn::make('key')
                     ->label(__('fields.setting_key'))
@@ -207,6 +211,7 @@ class SystemSettingsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('key', 'asc');
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order', 'asc');
     }
 }

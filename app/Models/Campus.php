@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Guava\Calendar\Contracts\Resourceable;
+use Guava\Calendar\ValueObjects\CalendarResource;
 
-class Campus extends Model
+class Campus extends Model implements Resourceable
 {
     protected $fillable = [
         'name',
@@ -69,5 +71,21 @@ class Campus extends Model
     public function finances(): HasMany
     {
         return $this->hasMany(Finance::class);
+    }
+
+    /**
+     * 實現 Resourceable 接口
+     */
+    public function toCalendarResource(): CalendarResource
+    {
+        return CalendarResource::make('campus_' . $this->id)
+            ->title($this->name)
+            ->eventBackgroundColor($this->color ?? '#3B82F6')
+            ->extendedProps([
+                'campus_id' => $this->id,
+                'address' => $this->address,
+                'phone' => $this->phone,
+                'email' => $this->email,
+            ]);
     }
 }

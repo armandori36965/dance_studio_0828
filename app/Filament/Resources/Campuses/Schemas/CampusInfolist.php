@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Campuses\Schemas;
 
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ColorEntry;
 use Filament\Schemas\Schema;
 
 class CampusInfolist
@@ -20,6 +21,9 @@ class CampusInfolist
                     ->label('電話'),
                 TextEntry::make('email')
                     ->label('電子郵件地址'),
+                ColorEntry::make('color')
+                    ->label('校區顏色')
+                    ->default('#3B82F6'),
                 IconEntry::make('is_active')
                     ->label('啟用狀態')
                     ->boolean()

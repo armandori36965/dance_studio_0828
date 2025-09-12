@@ -18,7 +18,12 @@ class EquipmentTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with(['campus']))
             ->columns([
+                TextColumn::make('sort_order')
+                    ->label('排序')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')
                     ->label(__('fields.equipment_name'))
                     ->searchable()
@@ -82,6 +87,8 @@ class EquipmentTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order', 'asc');
     }
 }

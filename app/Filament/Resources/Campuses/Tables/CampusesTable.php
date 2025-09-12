@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -17,33 +18,47 @@ class CampusesTable
     {
         return $table
             ->columns([
+                // 顏色欄位 - 預設顯示
+                ColorColumn::make('color')
+                    ->label(__('fields.color'))
+                    ->default('#3B82F6'),
+                // 校區名稱 - 預設顯示
                 TextColumn::make('name')
-                    ->label(__('fields.campus_name'))
+                    ->label('校區')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('address')
-                    ->label(__('fields.address'))
-                    ->searchable()
-                    ->limit(50),
+                // 電話 - 預設顯示
                 TextColumn::make('phone')
                     ->label(__('fields.phone'))
                     ->searchable(),
+                 // 電子郵件 - 可切換顯示
                 TextColumn::make('email')
                     ->label(__('fields.email_address'))
                     ->searchable()
-                    ->limit(50),
+                    ->limit(50)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                // 地址 - 可切換顯示
+                TextColumn::make('address')
+                    ->label(__('fields.address'))
+                    ->searchable()
+                    ->limit(50)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                // 啟用狀態 - 可切換顯示
                 IconColumn::make('is_active')
                     ->label(__('fields.is_active'))
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
-                    ->falseColor('danger'),
+                    ->falseColor('danger')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                // 建立時間 - 隱藏
                 TextColumn::make('created_at')
                     ->label(__('fields.created_at'))
                     ->dateTime('Y-m-d H:i:s')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                // 更新時間 - 隱藏
                 TextColumn::make('updated_at')
                     ->label(__('fields.updated_at'))
                     ->dateTime('Y-m-d H:i:s')

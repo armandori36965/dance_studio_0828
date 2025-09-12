@@ -19,6 +19,10 @@ class UsersTable
     {
         return $table
             ->columns([
+                TextColumn::make('sort_order')
+                    ->label('排序')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // 用戶姓名欄位
                 TextColumn::make('name')
                     ->label(__('fields.user_name'))
@@ -80,6 +84,8 @@ class UsersTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order', 'asc');
     }
 }

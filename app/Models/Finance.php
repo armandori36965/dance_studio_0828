@@ -15,6 +15,7 @@ class Finance extends Model
         'description',
         'status',
         'campus_id',
+        'sort_order',
     ];
 
     protected $casts = [

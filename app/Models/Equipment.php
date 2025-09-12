@@ -14,6 +14,7 @@ class Equipment extends Model
         'purchase_date',
         'status',
         'campus_id',
+        'sort_order',
     ];
 
     protected $casts = [

@@ -56,6 +56,17 @@ class AdminRoleSeeder extends Seeder
                 'finance.delete',
                 'finance.report',
 
+                // 行事曆管理權限
+                'view_calendar',
+                'create_events',
+                'update_events',
+                'delete_events',
+                'create_courses',
+                'update_courses',
+                'delete_courses',
+                'manage_campus_events',
+                'manage_campus_courses',
+
                 // 系統管理權限
                 'user.manage',
                 'role.manage',

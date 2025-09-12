@@ -22,6 +22,10 @@ class SchoolEventsTable
     {
         return $table
             ->columns([
+                TextColumn::make('sort_order')
+                    ->label('排序')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                                 // 核心欄位 - 不可切換
                 TextColumn::make('title')
                     ->label('標題')
@@ -144,6 +148,7 @@ class SchoolEventsTable
             ])
             ->poll('60s') // 可選：添加輪詢更新
             ->extremePaginationLinks() // 改善分頁顯示
-            ->defaultSort('start_time', 'desc'); // 預設按開始時間排序
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order', 'asc'); // 預設按排序欄位排序
     }
 }

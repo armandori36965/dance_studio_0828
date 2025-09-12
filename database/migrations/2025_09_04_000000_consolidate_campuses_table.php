@@ -42,3 +42,4 @@ return new class extends Migration
         // 不刪除表，以避免資料遺失
     }
 };
+

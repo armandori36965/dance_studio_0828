@@ -17,7 +17,12 @@ class FinancesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with(['campus', 'course', 'user']))
             ->columns([
+                TextColumn::make('sort_order')
+                    ->label('排序')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('title')
                     ->label(__('fields.finance_title'))
                     ->searchable()
@@ -102,6 +107,8 @@ class FinancesTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order', 'asc');
     }
 }

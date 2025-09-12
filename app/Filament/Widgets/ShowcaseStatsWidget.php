@@ -22,7 +22,9 @@ class ShowcaseStatsWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        return [
+        // 使用快取提升效能
+        return cache()->remember('showcase_stats', 300, function () {
+            return [
             Stat::make('總用戶數', User::count())
                 ->description('系統註冊的總用戶數量')
                 ->descriptionIcon('heroicon-m-users')
@@ -59,6 +61,7 @@ class ShowcaseStatsWidget extends BaseWidget
                 ->description('財務收支記錄總數')
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('danger'),
-        ];
+            ];
+        });
     }
 }

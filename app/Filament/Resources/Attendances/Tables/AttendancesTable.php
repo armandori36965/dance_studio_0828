@@ -18,7 +18,12 @@ class AttendancesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with(['user', 'course', 'campus']))
             ->columns([
+                TextColumn::make('sort_order')
+                    ->label('排序')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // 學員姓名
                 TextColumn::make('user.name')
                     ->label(__('fields.student_name'))
@@ -107,6 +112,8 @@ class AttendancesTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order', 'asc');
     }
 }

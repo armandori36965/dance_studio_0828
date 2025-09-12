@@ -19,13 +19,17 @@ class CoursesTable
     {
         return $table
             ->columns([
+                TextColumn::make('sort_order')
+                    ->label('排序')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')
                     ->label(__('fields.course_name'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('price')
                     ->label(__('fields.course_price'))
-                    ->money('TWD')
+                    ->formatStateUsing(fn ($state) => '$' . number_format($state, 0))
                     ->sortable(),
                 TextColumn::make('duration')
                     ->label(__('fields.course_duration'))
@@ -33,17 +37,26 @@ class CoursesTable
                         if ($record->start_time && $record->end_time) {
                             $start = \Carbon\Carbon::parse($record->start_time);
                             $end = \Carbon\Carbon::parse($record->end_time);
-                            $minutes = $end->diffInMinutes($start);
-                            $hours = floor($minutes / 60);
-                            $remainingMinutes = $minutes % 60;
 
-                            if ($hours > 0) {
-                                return $hours . '小時' . ($remainingMinutes > 0 ? $remainingMinutes . '分鐘' : '');
+                            // 使用 timestamp 計算，確保正確
+                            $startTimestamp = $start->timestamp;
+                            $endTimestamp = $end->timestamp;
+
+                            if ($endTimestamp > $startTimestamp) {
+                                $minutes = ($endTimestamp - $startTimestamp) / 60;
+                                $hours = floor($minutes / 60);
+                                $remainingMinutes = $minutes % 60;
+
+                                if ($hours > 0) {
+                                    return $hours . '小時' . ($remainingMinutes > 0 ? $remainingMinutes . '分鐘' : '');
+                                } else {
+                                    return round($minutes) . '分鐘';
+                                }
                             } else {
-                                return $minutes . '分鐘';
+                                return '時間設定錯誤';
                             }
                         }
-                        return '未設定';
+                        return '-';
                     })
                     ->sortable(false),
                 TextColumn::make('student_count')
@@ -54,11 +67,19 @@ class CoursesTable
                     ->sortable(),
                 TextColumn::make('level')
                     ->label(__('fields.course_level'))
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'beginner' => '初級',
+                        'intermediate' => '中級',
+                        'advanced' => '高級',
+                        'competition' => '比賽隊',
+                        default => $state,
+                    })
                     ->sortable(),
                 IconColumn::make('is_active')
                     ->label(__('fields.is_active'))
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label(__('fields.created_at'))
                     ->dateTime()
@@ -99,6 +120,8 @@ class CoursesTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order', 'asc');
     }
 }

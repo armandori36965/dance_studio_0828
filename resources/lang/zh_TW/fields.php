@@ -47,6 +47,7 @@ return [
     'address' => '地址',
     'phone' => '電話',
     'email_address' => '電子郵件地址',
+    'color' => '顏色',
 
     // 財務相關欄位
     'finance_title' => '財務項目標題',

@@ -13,7 +13,8 @@ class SystemSetting extends Model
         'key',
         'value',
         'description',
-        'type'
+        'type',
+        'sort_order'
     ];
 
     /**

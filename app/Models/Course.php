@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Guava\Calendar\Contracts\Eventable;
+use Guava\Calendar\ValueObjects\CalendarEvent;
 
-class Course extends Model
+class Course extends Model implements Eventable
 {
     protected $fillable = [
         'name',
@@ -17,6 +19,7 @@ class Course extends Model
         'campus_id',
         'level',
         'is_active',
+        'sort_order',
     ];
 
     // 日期欄位
@@ -30,5 +33,47 @@ class Course extends Model
     public function campus(): BelongsTo
     {
         return $this->belongsTo(Campus::class);
+    }
+
+    /**
+     * 獲取路由鍵名
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
+
+    /**
+     * 實現 Eventable 接口
+     */
+    public function toCalendarEvent(): CalendarEvent
+    {
+        return CalendarEvent::make()
+            ->key((string) $this->id)
+            ->title($this->name)
+            ->start($this->start_time)
+            ->end($this->end_time ?? $this->start_time->addHours(1))
+            ->allDay(false)
+            ->backgroundColor($this->getCourseColor())
+            ->textColor('#ffffff')
+            ->extendedProps([
+                'model' => static::class,
+                'key' => (string) $this->id,
+                'type' => 'course',
+                'model_id' => $this->id,
+                'description' => $this->description,
+                'campus' => $this->campus?->name,
+                'level' => $this->level,
+                'price' => $this->price,
+                'student_count' => $this->student_count,
+            ]);
+    }
+
+    /**
+     * 獲取課程顏色（使用校區顏色）
+     */
+    protected function getCourseColor(): string
+    {
+        return $this->campus?->color ?? '#6B7280';
     }
 }

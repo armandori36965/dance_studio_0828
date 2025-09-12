@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @method bool hasPermission(string $permission)
+ * @method bool hasAnyPermission(array $permissions)
+ * @method bool hasAllPermissions(array $permissions)
+ * @method bool hasRole(string $roleName)
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -21,7 +27,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role_id'
+        'role_id',
+        'campus_id',
+        'sort_order'
     ];
 
     /**

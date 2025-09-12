@@ -13,7 +13,9 @@ class Role extends Model
     protected $fillable = [
         'name',
         'permissions',
-        'description'
+        'description',
+        'is_active',
+        'sort_order'
     ];
 
     /**

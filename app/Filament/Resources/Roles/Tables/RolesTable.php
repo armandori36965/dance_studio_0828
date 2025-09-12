@@ -15,6 +15,10 @@ class RolesTable
     {
         return $table
             ->columns([
+                TextColumn::make('sort_order')
+                    ->label('排序')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // 角色名稱欄位
                 TextColumn::make('name')
                     ->label(__('fields.role_name'))
@@ -65,6 +69,8 @@ class RolesTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order', 'asc');
     }
 }

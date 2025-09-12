@@ -74,6 +74,17 @@ class RoleForm
                         'finance.delete' => __('fields.delete') . __('fields.finances'),
                         'finance.report' => __('fields.reports'),
 
+                        // 行事曆管理權限
+                        'view_calendar' => '查看行事曆',
+                        'create_events' => '建立校務事件',
+                        'update_events' => '更新校務事件',
+                        'delete_events' => '刪除校務事件',
+                        'create_courses' => '建立課程',
+                        'update_courses' => '更新課程',
+                        'delete_courses' => '刪除課程',
+                        'manage_campus_events' => '管理校區事件',
+                        'manage_campus_courses' => '管理校區課程',
+
                         // 系統管理權限
                         'user.manage' => __('fields.manage') . __('fields.users'),
                         'role.manage' => __('fields.manage') . __('fields.roles'),
