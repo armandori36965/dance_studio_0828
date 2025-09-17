@@ -15,6 +15,7 @@ class Role extends Model
         'permissions',
         'description',
         'is_active',
+        'requires_campus',
         'sort_order'
     ];
 
@@ -23,6 +24,8 @@ class Role extends Model
      */
     protected $casts = [
         'permissions' => 'array',
+        'is_active' => 'boolean',
+        'requires_campus' => 'boolean',
     ];
 
     /**

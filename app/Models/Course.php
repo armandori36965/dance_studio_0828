@@ -17,6 +17,7 @@ class Course extends Model implements Eventable
         'end_time',
         'student_count',
         'campus_id',
+        'teacher_id',
         'level',
         'is_active',
         'sort_order',
@@ -33,6 +34,12 @@ class Course extends Model implements Eventable
     public function campus(): BelongsTo
     {
         return $this->belongsTo(Campus::class);
+    }
+
+    // 與老師的關係
+    public function teacher(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'teacher_id');
     }
 
     /**

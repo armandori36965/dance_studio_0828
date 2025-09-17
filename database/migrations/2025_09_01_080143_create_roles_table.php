@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text('permissions')->nullable(); // 權限列表（JSON格式）
             $table->text('description')->nullable(); // 角色描述
             $table->boolean('is_active')->default(true)->comment('是否啟用'); // 角色啟用狀態
+            $table->boolean('requires_campus')->default(false)->comment('是否需要校區'); // 是否需要校區
             $table->timestamps();
         });
     }

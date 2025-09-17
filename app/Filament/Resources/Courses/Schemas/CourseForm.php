@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Courses\Schemas;
 
 use App\Models\Campus;
+use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -68,9 +69,20 @@ class CourseForm
                     ->rules(['after:start_time']),
                 Select::make('campus_id')
                     ->label(__('fields.campus_name'))
-                    ->options(Campus::pluck('name', 'id'))
+                    ->options(function () {
+                        return Campus::orderBy('sort_order', 'asc')->pluck('name', 'id');
+                    })
                     ->searchable()
                     ->required(),
+                Select::make('teacher_id')
+                    ->label('授課老師')
+                    ->options(function () {
+                        return User::whereHas('role', function ($query) {
+                            $query->where('name', '教師');
+                        })->orderBy('name', 'asc')->pluck('name', 'id');
+                    })
+                    ->searchable()
+                    ->placeholder('選擇授課老師'),
                 Select::make('level')
                     ->label(__('fields.course_level'))
                     ->options([

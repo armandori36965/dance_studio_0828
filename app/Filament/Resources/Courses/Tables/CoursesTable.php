@@ -19,18 +19,48 @@ class CoursesTable
     {
         return $table
             ->columns([
-                TextColumn::make('sort_order')
-                    ->label('排序')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                // 課程名稱 - 預設顯示
                 TextColumn::make('name')
                     ->label(__('fields.course_name'))
                     ->searchable()
                     ->sortable(),
+
+                // 課程等級 - 預設顯示
+                TextColumn::make('level')
+                    ->label(__('fields.course_level'))
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'beginner' => '初級',
+                        'intermediate' => '中級',
+                        'advanced' => '高級',
+                        'competition' => '比賽隊',
+                        default => $state,
+                    })
+                    ->sortable(),
+
+                // 授課老師 - 預設顯示
+                TextColumn::make('teacher.name')
+                    ->label('授課老師')
+                    ->sortable()
+                    ->placeholder('未指派'),
+
+                // 學員數 - 預設顯示
+                TextColumn::make('student_count')
+                    ->label(__('fields.student_count'))
+                    ->sortable(),
+
+                // 校區名稱 - 預設顯示
+                TextColumn::make('campus.name')
+                    ->label(__('fields.campus_name'))
+                    ->sortable(),
+
+                // 課程價格 - 隱藏
                 TextColumn::make('price')
                     ->label(__('fields.course_price'))
                     ->formatStateUsing(fn ($state) => '$' . number_format($state, 0))
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                // 課程時長 - 隱藏
                 TextColumn::make('duration')
                     ->label(__('fields.course_duration'))
                     ->getStateUsing(function ($record) {
@@ -58,33 +88,24 @@ class CoursesTable
                         }
                         return '-';
                     })
-                    ->sortable(false),
-                TextColumn::make('student_count')
-                    ->label(__('fields.student_count'))
-                    ->sortable(),
-                TextColumn::make('campus.name')
-                    ->label(__('fields.campus_name'))
-                    ->sortable(),
-                TextColumn::make('level')
-                    ->label(__('fields.course_level'))
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'beginner' => '初級',
-                        'intermediate' => '中級',
-                        'advanced' => '高級',
-                        'competition' => '比賽隊',
-                        default => $state,
-                    })
-                    ->sortable(),
+                    ->sortable(false)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                // 啟用狀態 - 隱藏
                 IconColumn::make('is_active')
                     ->label(__('fields.is_active'))
                     ->boolean()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                // 建立時間 - 隱藏
                 TextColumn::make('created_at')
                     ->label(__('fields.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                // 更新時間 - 隱藏
                 TextColumn::make('updated_at')
                     ->label(__('fields.updated_at'))
                     ->dateTime()
@@ -108,7 +129,10 @@ class CoursesTable
                     ]),
                 SelectFilter::make('campus_id')
                     ->label(__('fields.campus_name'))
-                    ->relationship('campus', 'name'),
+                    ->options(function () {
+                        return \App\Models\Campus::orderBy('sort_order', 'asc')->pluck('name', 'id');
+                    })
+                    ->searchable(),
             ])
             ->recordActions([
                 EditAction::make()

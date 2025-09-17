@@ -83,6 +83,7 @@ return [
     // 角色相關欄位
     'role_name' => '角色名稱',
     'role_description' => '角色描述',
+    'permissions' => '權限',
     'permission_count' => '權限數量',
     'user_count' => '用戶數量',
 
@@ -150,6 +151,7 @@ return [
     'edit' => '編輯',
     'delete' => '刪除',
     'view' => '查看',
+    'manage' => '管理',
     'save' => '儲存',
     'cancel' => '取消',
     'update' => '更新',
@@ -211,6 +213,17 @@ return [
     'profile' => '個人資料',
     'reports' => '報表',
     'logs' => '日誌',
+
+    // 行事曆相關權限
+    'view_calendar' => '查看行事曆',
+    'create_events' => '建立校務事件',
+    'update_events' => '更新校務事件',
+    'delete_events' => '刪除校務事件',
+    'create_courses' => '建立課程',
+    'update_courses' => '更新課程',
+    'delete_courses' => '刪除課程',
+    'manage_campus_events' => '管理校區事件',
+    'manage_campus_courses' => '管理校區課程',
 
     // 狀態相關（統一命名）
     'active' => '活躍',

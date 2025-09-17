@@ -29,7 +29,10 @@ class User extends Authenticatable
         'password',
         'role_id',
         'campus_id',
-        'sort_order'
+        'email_verified_at',
+        'sort_order',
+        'emergency_contact_name',
+        'emergency_contact_phone'
     ];
 
     /**
@@ -52,6 +55,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'sort_order' => 'integer',
         ];
     }
 

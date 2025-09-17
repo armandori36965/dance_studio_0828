@@ -33,6 +33,12 @@ class RoleForm
                     ->default(true)
                     ->columnSpan(1),
 
+                Toggle::make('requires_campus')
+                    ->label('需要校區')
+                    ->helperText('啟用後，擁有此角色的用戶在創建時必須選擇校區')
+                    ->default(false)
+                    ->columnSpan(1),
+
                 // 權限設定欄位
                 CheckboxList::make('permissions')
                     ->label(__('fields.permissions'))
@@ -75,21 +81,21 @@ class RoleForm
                         'finance.report' => __('fields.reports'),
 
                         // 行事曆管理權限
-                        'view_calendar' => '查看行事曆',
-                        'create_events' => '建立校務事件',
-                        'update_events' => '更新校務事件',
-                        'delete_events' => '刪除校務事件',
-                        'create_courses' => '建立課程',
-                        'update_courses' => '更新課程',
-                        'delete_courses' => '刪除課程',
-                        'manage_campus_events' => '管理校區事件',
-                        'manage_campus_courses' => '管理校區課程',
+                        'view_calendar' => __('fields.view_calendar'),
+                        'create_events' => __('fields.create_events'),
+                        'update_events' => __('fields.update_events'),
+                        'delete_events' => __('fields.delete_events'),
+                        'create_courses' => __('fields.create_courses'),
+                        'update_courses' => __('fields.update_courses'),
+                        'delete_courses' => __('fields.delete_courses'),
+                        'manage_campus_events' => __('fields.manage_campus_events'),
+                        'manage_campus_courses' => __('fields.manage_campus_courses'),
 
                         // 系統管理權限
                         'user.manage' => __('fields.manage') . __('fields.users'),
                         'role.manage' => __('fields.manage') . __('fields.roles'),
                         'system.setting' => __('fields.settings'),
-                        'audit.log' => __('filament-resources.pages.logs'),
+                        'audit.log' => __('fields.logs'),
                     ])
                     ->columns(3)
                     ->gridDirection('row')

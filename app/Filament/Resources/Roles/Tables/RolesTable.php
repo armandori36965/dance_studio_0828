@@ -4,8 +4,8 @@ namespace App\Filament\Resources\Roles\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -15,10 +15,6 @@ class RolesTable
     {
         return $table
             ->columns([
-                TextColumn::make('sort_order')
-                    ->label('排序')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 // 角色名稱欄位
                 TextColumn::make('name')
                     ->label(__('fields.role_name'))
@@ -31,6 +27,13 @@ class RolesTable
                     ->searchable()
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                // 是否需要校區欄位
+                TextColumn::make('requires_campus')
+                    ->label('需要校區')
+                    ->formatStateUsing(fn ($state) => $state ? '是' : '否')
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'success' : 'gray'),
 
                 // 權限數量欄位
                 TextColumn::make('permission_count')
@@ -61,8 +64,8 @@ class RolesTable
             ])
             ->recordActions([
                 // 記錄操作按鈕
-                ViewAction::make(),
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 // 工具列操作按鈕

@@ -210,4 +210,15 @@ return [
         'placeholder' => '新增標籤',
     ],
 
+    'checkbox_list' => [
+        'actions' => [
+            'deselect_all' => [
+                'label' => '取消全選',
+            ],
+            'select_all' => [
+                'label' => '全選',
+            ],
+        ],
+    ],
+
 ];

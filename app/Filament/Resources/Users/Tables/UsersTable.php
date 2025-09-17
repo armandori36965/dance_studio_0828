@@ -19,10 +19,6 @@ class UsersTable
     {
         return $table
             ->columns([
-                TextColumn::make('sort_order')
-                    ->label('排序')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 // 用戶姓名欄位
                 TextColumn::make('name')
                     ->label(__('fields.user_name'))
@@ -33,7 +29,8 @@ class UsersTable
                 TextColumn::make('email')
                     ->label(__('fields.email'))
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 // 角色欄位
                 TextColumn::make('role.name')
@@ -42,6 +39,14 @@ class UsersTable
                     ->sortable()
                     ->badge()
                     ->color('primary'),
+
+                // 校區欄位
+                TextColumn::make('campus.name')
+                    ->label(__('fields.campus'))
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('success'),
 
                 // 電子郵件驗證時間
                 TextColumn::make('email_verified_at')
@@ -67,10 +72,16 @@ class UsersTable
             ->filters([
                 SelectFilter::make('role_id')
                     ->label(__('fields.role'))
-                    ->relationship('role', 'name'),
+                    ->options(function () {
+                        return \App\Models\Role::orderBy('sort_order', 'asc')->pluck('name', 'id');
+                    })
+                    ->searchable(),
                 SelectFilter::make('campus_id')
                     ->label(__('fields.campus_name'))
-                    ->relationship('campus', 'name'),
+                    ->options(function () {
+                        return \App\Models\Campus::orderBy('sort_order', 'asc')->pluck('name', 'id');
+                    })
+                    ->searchable(),
             ])
             ->recordActions([
                 // 記錄操作按鈕

@@ -22,10 +22,6 @@ class SchoolEventsTable
     {
         return $table
             ->columns([
-                TextColumn::make('sort_order')
-                    ->label('排序')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                                 // 核心欄位 - 不可切換
                 TextColumn::make('title')
                     ->label('標題')
