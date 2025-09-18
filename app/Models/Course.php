@@ -42,6 +42,12 @@ class Course extends Model implements Eventable
         return $this->belongsTo(User::class, 'teacher_id');
     }
 
+    // 與學生的多對多關係
+    public function students()
+    {
+        return $this->belongsToMany(User::class, 'user_course');
+    }
+
     /**
      * 獲取路由鍵名
      */
@@ -55,25 +61,31 @@ class Course extends Model implements Eventable
      */
     public function toCalendarEvent(): CalendarEvent
     {
-        return CalendarEvent::make()
-            ->key((string) $this->id)
+        // 為沒有 ID 的事件生成唯一 key
+        $key = $this->id ?: 'temp_' . md5($this->name . $this->start_time->toDateTimeString());
+
+        $event = CalendarEvent::make()
             ->title($this->name)
             ->start($this->start_time)
             ->end($this->end_time ?? $this->start_time->addHours(1))
             ->allDay(false)
             ->backgroundColor($this->getCourseColor())
             ->textColor('#ffffff')
+            ->resourceId('campus_' . $this->campus_id)
+            ->key($key)
             ->extendedProps([
                 'model' => static::class,
-                'key' => (string) $this->id,
                 'type' => 'course',
                 'model_id' => $this->id,
+                'key' => $key,
                 'description' => $this->description,
                 'campus' => $this->campus?->name,
                 'level' => $this->level,
                 'price' => $this->price,
                 'student_count' => $this->student_count,
             ]);
+
+        return $event;
     }
 
     /**

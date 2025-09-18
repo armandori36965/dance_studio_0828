@@ -11,15 +11,18 @@ class CalendarAssetServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // 註冊本地 Event Calendar 資源
-        FilamentAsset::register(
-            assets: [
-                // 使用本地 CSS 檔案
-                Css::make('event-calendar-styles', public_path('vendor/event-calendar/event-calendar.min.css')),
-                // 使用本地 JS 檔案
-                Js::make('event-calendar-script', public_path('vendor/event-calendar/event-calendar.min.js')),
-            ],
-            package: 'app/calendar'
-        );
+        // 檢查是否使用本地資源（避免 CDN 載入問題）
+        if (config('app.use_local_calendar_assets', true)) {
+            // 覆蓋 Guava Calendar 的 CDN 資源，使用本地文件
+            FilamentAsset::register(
+                assets: [
+                    // 覆蓋 Guava Calendar 的 CSS 資源
+                    Css::make('calendar-styles', public_path('vendor/event-calendar/event-calendar.min.css')),
+                    // 覆蓋 Guava Calendar 的 JS 資源
+                    Js::make('calendar-script', public_path('vendor/event-calendar/event-calendar.min.js')),
+                ],
+                package: 'guava/calendar'
+            );
+        }
     }
 }

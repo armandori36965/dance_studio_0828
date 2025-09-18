@@ -30,38 +30,39 @@ class SchoolEventInfolist
                     ->label('結束時間')
                     ->dateTime(),
 
-                // 地點
-                TextEntry::make('location')
-                    ->label('地點'),
-
                 // 事件類型
                 TextEntry::make('category')
-                    ->label('事件類型'),
-
-                // 狀態
-                TextEntry::make('status')
-                    ->label('狀態')
+                    ->label('事件類型')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'active' => 'success',
-                        'inactive' => 'danger',
-                        'todo' => 'warning',
-                        'pending' => 'warning', // 向後相容舊資料
-                        'completed' => 'info',
+                        'national_holiday' => 'danger',
+                        'periodic_assessment' => 'warning',
+                        'disaster_drill' => 'info',
+                        'school_anniversary' => 'success',
+                        'todo' => 'primary',
+                        'other' => 'gray',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'active' => '啟用',
-                        'inactive' => '停用',
-                        'todo' => '待辦',
-                        'pending' => '待辦', // 向後相容舊資料
-                        'completed' => '完成',
+                        'national_holiday' => __('fields.national_holiday'),
+                        'periodic_assessment' => __('fields.periodic_assessment'),
+                        'disaster_drill' => __('fields.disaster_drill'),
+                        'school_anniversary' => __('fields.school_anniversary'),
+                        'todo' => __('fields.todo'),
+                        'other' => __('fields.other'),
                         default => $state,
                     }),
 
                 // 所屬校區
                 TextEntry::make('campus.name')
-                    ->label('所屬校區'),
+                    ->label('所屬校區')
+                    ->formatStateUsing(function ($state, $record) {
+                        if ($state) {
+                            return $state;
+                        }
+                        // 如果是國定假日，顯示「國定假日」
+                        return $record->category === 'national_holiday' ? '國定假日' : '未指定';
+                    }),
 
                 // 創建者
                 TextEntry::make('creator.name')

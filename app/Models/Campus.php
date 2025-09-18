@@ -11,6 +11,7 @@ class Campus extends Model implements Resourceable
 {
     protected $fillable = [
         'name',
+        'type',
         'address',
         'phone',
         'email',

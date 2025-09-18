@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SchoolEvents\Tables;
 
 use App\Models\User;
+use App\Models\Campus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -39,41 +40,38 @@ class SchoolEventsTable
                     ->label('類型')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'course' => 'primary',
-                        'performance' => 'success',
-                        'meeting' => 'warning',
+                        'national_holiday' => 'danger',
+                        'periodic_assessment' => 'warning',
+                        'disaster_drill' => 'info',
+                        'school_anniversary' => 'success',
+                        'todo' => 'primary',
                         'other' => 'gray',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'course' => __('fields.course_activity'),
-                        'performance' => __('fields.performance_activity'),
-                        'meeting' => __('fields.meeting_activity'),
-                        'other' => __('fields.other_activity'),
+                        'national_holiday' => __('fields.national_holiday'),
+                        'periodic_assessment' => __('fields.periodic_assessment'),
+                        'disaster_drill' => __('fields.disaster_drill'),
+                        'school_anniversary' => __('fields.school_anniversary'),
+                        'todo' => __('fields.todo'),
+                        'other' => __('fields.other'),
                         default => $state,
                     })
                     ->toggleable(false),
 
-                TextColumn::make('status')
-                    ->label('狀態')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'active' => 'success',
-                        'inactive' => 'danger',
-                        'todo' => 'warning',
-                        'pending' => 'warning', // 向後相容舊資料
-                        'completed' => 'info',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'active' => __('fields.status_event_active'),
-                        'inactive' => __('fields.status_event_inactive'),
-                        'todo' => __('fields.status_event_todo'),
-                        'pending' => __('fields.status_event_todo'), // 向後相容舊資料
-                        'completed' => __('fields.status_event_completed'),
-                        default => $state,
+                TextColumn::make('campus.name')
+                    ->label(__('fields.campus'))
+                    ->searchable()
+                    ->sortable()
+                    ->formatStateUsing(function ($state, $record) {
+                        if ($state) {
+                            return $state;
+                        }
+                        // 如果是國定假日，顯示「國定假日」
+                        return $record->category === 'national_holiday' ? '國定假日' : '未指定';
                     })
                     ->toggleable(false),
+
 
                 // 可選欄位 - 可切換
                 TextColumn::make('description')
@@ -88,11 +86,6 @@ class SchoolEventsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('location')
-                    ->label('地點')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('creator.name')
                     ->label('建立者')
@@ -116,19 +109,30 @@ class SchoolEventsTable
                 SelectFilter::make('category')
                     ->label(__('fields.event_type'))
                     ->options([
-                        'course' => __('fields.course_activity'),
-                        'performance' => __('fields.performance_activity'),
-                        'meeting' => __('fields.meeting_activity'),
-                        'other' => __('fields.other_activity'),
+                        'national_holiday' => __('fields.national_holiday'),
+                        'periodic_assessment' => __('fields.periodic_assessment'),
+                        'disaster_drill' => __('fields.disaster_drill'),
+                        'school_anniversary' => __('fields.school_anniversary'),
+                        'todo' => __('fields.todo'),
+                        'other' => __('fields.other'),
                     ]),
-                SelectFilter::make('status')
-                    ->label(__('fields.status'))
-                    ->options([
-                        'active' => __('fields.status_event_active'),
-                        'inactive' => __('fields.status_event_inactive'),
-                        'todo' => __('fields.status_event_todo'),
-                        'completed' => __('fields.status_event_completed'),
-                    ]),
+
+                SelectFilter::make('campus_id')
+                    ->label(__('fields.campus'))
+                    ->options(function () {
+                        return Campus::orderBy('sort_order', 'asc')
+                            ->pluck('name', 'id');
+                    })
+                    ->searchable()
+                    ->query(function ($query, array $data) {
+                        if (isset($data['value']) && $data['value'] !== '') {
+                            // 篩選特定校區時，同時顯示該校區事件和國定假日
+                            $query->where(function ($q) use ($data) {
+                                $q->where('campus_id', $data['value'])
+                                  ->orWhereNull('campus_id');
+                            });
+                        }
+                    }),
             ])
             ->recordActions([
                 EditAction::make()
@@ -144,6 +148,8 @@ class SchoolEventsTable
             ])
             ->poll('60s') // 可選：添加輪詢更新
             ->extremePaginationLinks() // 改善分頁顯示
+            ->paginated([10, 25, 50, 100]) // 設定每頁顯示筆數選項
+            ->defaultPaginationPageOption(10) // 預設每頁顯示10筆
             ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc'); // 預設按排序欄位排序
     }

@@ -29,6 +29,8 @@ class User extends Authenticatable
         'password',
         'role_id',
         'campus_id',
+        'cram_school_id',
+        'class',
         'email_verified_at',
         'sort_order',
         'emergency_contact_name',
@@ -105,5 +107,21 @@ class User extends Authenticatable
     public function campus()
     {
         return $this->belongsTo(Campus::class);
+    }
+
+    /**
+     * 與補習班的關係
+     */
+    public function cramSchool()
+    {
+        return $this->belongsTo(Campus::class, 'cram_school_id');
+    }
+
+    /**
+     * 與課程的多對多關係
+     */
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'user_course');
     }
 }

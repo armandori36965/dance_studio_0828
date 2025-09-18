@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Resources\Users\Schemas\UserInfolist;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
 
 class ViewUser extends ViewRecord
 {
@@ -15,5 +17,10 @@ class ViewUser extends ViewRecord
         return [
             EditAction::make(),
         ];
+    }
+
+    public function infolist(Schema $schema): Schema
+    {
+        return UserInfolist::configure($schema);
     }
 }

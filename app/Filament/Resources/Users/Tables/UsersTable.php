@@ -48,12 +48,70 @@ class UsersTable
                     ->badge()
                     ->color('success'),
 
-                // 電子郵件驗證時間
-                TextColumn::make('email_verified_at')
-                    ->label(__('fields.email_verified_at'))
-                    ->dateTime()
+                // 班級欄位
+                TextColumn::make('class')
+                    ->label('班級')
+                    ->searchable()
                     ->sortable()
+                    ->badge()
+                    ->color('info')
+                    ->toggleable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                // 學校課程欄位
+                TextColumn::make('school_courses')
+                    ->label('學校課程')
+                    ->badge()
+                    ->color('success')
+                    ->getStateUsing(function ($record) {
+                        if (!$record || !$record->courses) {
+                            return [];
+                        }
+
+                        $courses = $record->courses->load('campus');
+                        return $courses->filter(function ($course) {
+                            return $course->campus && $course->campus->type === 'school';
+                        })->pluck('name')->toArray();
+                    })
+                    ->separator(', ')
+                    ->limit(50)
+                    ->tooltip(function (TextColumn $column): ?string {
+                        $state = $column->getState();
+                        if (is_array($state) && count($state) > 0) {
+                            return implode(', ', $state);
+                        }
+                        return null;
+                    })
+                    ->toggleable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                // 補習班課程欄位
+                TextColumn::make('cram_school_courses')
+                    ->label('補習班課程')
+                    ->badge()
+                    ->color('info')
+                    ->getStateUsing(function ($record) {
+                        if (!$record || !$record->courses) {
+                            return [];
+                        }
+
+                        $courses = $record->courses->load('campus');
+                        return $courses->filter(function ($course) {
+                            return $course->campus && $course->campus->type === 'cram_school';
+                        })->pluck('name')->toArray();
+                    })
+                    ->separator(', ')
+                    ->limit(50)
+                    ->tooltip(function (TextColumn $column): ?string {
+                        $state = $column->getState();
+                        if (is_array($state) && count($state) > 0) {
+                            return implode(', ', $state);
+                        }
+                        return null;
+                    })
+                    ->toggleable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
 
                 // 建立時間
                 TextColumn::make('created_at')
@@ -82,6 +140,16 @@ class UsersTable
                         return \App\Models\Campus::orderBy('sort_order', 'asc')->pluck('name', 'id');
                     })
                     ->searchable(),
+                SelectFilter::make('class')
+                    ->label('班級')
+                    ->options(function () {
+                        return \App\Models\User::whereNotNull('class')
+                            ->where('class', '!=', '')
+                            ->distinct()
+                            ->pluck('class', 'class')
+                            ->sort();
+                    })
+                    ->searchable(),
             ])
             ->recordActions([
                 // 記錄操作按鈕
@@ -96,6 +164,9 @@ class UsersTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->extremePaginationLinks() // 改善分頁顯示
+            ->paginated([10, 25, 50, 100]) // 設定每頁顯示筆數選項
+            ->defaultPaginationPageOption(10) // 預設每頁顯示10筆
             ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc');
     }

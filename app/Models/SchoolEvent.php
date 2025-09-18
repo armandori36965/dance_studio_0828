@@ -33,6 +33,12 @@ class SchoolEvent extends Model implements Eventable
         'extended_props' => 'array',
     ];
 
+    // 預設值
+    protected $attributes = [
+        'location' => '',
+        'status' => 'active',
+    ];
+
     // 與用戶的關係
     public function creator()
     {
@@ -57,27 +63,39 @@ class SchoolEvent extends Model implements Eventable
     /**
      * 實現 Eventable 接口
      */
-    public function toCalendarEvent(): CalendarEvent
+public function toCalendarEvent(): CalendarEvent
     {
-        return CalendarEvent::make()
-            ->key((string) $this->id)
+        // 為沒有 ID 的事件生成唯一 key
+        $key = $this->id ?: 'temp_' . md5($this->title . $this->start_time->toDateTimeString());
+
+        $event = CalendarEvent::make()
             ->title($this->title)
             ->start($this->start_time)
             ->end($this->end_time ?? $this->start_time->addHours(2))
             ->allDay(false)
             ->backgroundColor($this->getDefaultEventColor())
             ->textColor('#ffffff')
+            ->resourceId('campus_' . $this->campus_id)
+            ->key($key)
             ->extendedProps([
                 'model' => static::class,
-                'key' => (string) $this->id,
                 'type' => 'school_event',
                 'model_id' => $this->id,
+                'key' => $key,
                 'description' => $this->description,
                 'campus' => $this->campus?->name,
                 'location' => $this->location,
                 'category' => $this->category,
                 'status' => $this->status,
             ]);
+
+        // 國定假日使用背景顯示
+        if ($this->category === 'national_holiday') {
+            $event->display('background')
+                  ->allDay(true); // 國定假日設為全天事件
+        }
+
+        return $event;
     }
 
     /**
@@ -85,6 +103,11 @@ class SchoolEvent extends Model implements Eventable
      */
     protected function getDefaultEventColor(): string
     {
+        // 國定假日使用特殊的紅色背景
+        if ($this->category === 'national_holiday') {
+            return '#DC2626'; // 紅色背景，表示國定假日
+        }
+
         return $this->campus?->color ?? '#6B7280';
     }
 }

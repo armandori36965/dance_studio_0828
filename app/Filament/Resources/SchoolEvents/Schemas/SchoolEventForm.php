@@ -63,38 +63,29 @@ class SchoolEventForm
                     ->after('start_time')
                     ->rules(['after:start_time']),
 
-                TextInput::make('location')
-                    ->label(__('fields.location'))
-                    ->maxLength(255),
-
                 Select::make('category')
                     ->label(__('fields.event_type'))
                     ->searchable()
+                    ->placeholder(__('fields.select_type'))
                     ->options([
-                        'course' => __('fields.course_activity'),
-                        'performance' => __('fields.performance_activity'),
-                        'meeting' => __('fields.meeting_activity'),
-                        'other' => __('fields.other_activity'),
+                        'national_holiday' => __('fields.national_holiday'),
+                        'periodic_assessment' => __('fields.periodic_assessment'),
+                        'disaster_drill' => __('fields.disaster_drill'),
+                        'school_anniversary' => __('fields.school_anniversary'),
+                        'todo' => __('fields.todo'),
+                        'other' => __('fields.other'),
                     ])
                     ->required(),
-
-                Select::make('status')
-                    ->label(__('fields.status'))
-                    ->searchable()
-                    ->options([
-                        'active' => __('fields.status_event_active'),
-                        'inactive' => __('fields.status_event_inactive'),
-                        'todo' => __('fields.status_event_todo'),
-                        'completed' => __('fields.status_event_completed'),
-                    ])
-                    ->required()
-                    ->default('active'),
 
                 Select::make('campus_id')
                     ->label(__('fields.campus_name'))
-                    ->options(Campus::pluck('name', 'id'))
+                    ->options(function () {
+                        return Campus::orderBy('sort_order', 'asc')
+                            ->pluck('name', 'id');
+                    })
                     ->searchable()
-                    ->required(),
+                    ->placeholder(__('fields.select_campus'))
+                    ->helperText('留空表示此事件為國定假日，適用於所有校區'),
 
 
 

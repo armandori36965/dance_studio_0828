@@ -6,10 +6,7 @@
 @endphp
 
 <x-filament-widgets::widget>
-    <x-filament::section
-        :after-header="$this->getCachedHeaderActionsComponent()"
-        :footer="$this->getCachedFooterActionsComponent()"
-    >
+    <x-filament::section :after-header="$this->getCachedHeaderActionsComponent()" :footer="$this->getCachedFooterActionsComponent()">
 
         <style>
             .ec-event.ec-preview,
@@ -18,16 +15,13 @@
             }
         </style>
 
-        @if($heading = $this->getHeading())
+        @if ($heading = $this->getHeading())
             <x-slot name="heading">
                 {{ $this->getHeading() }}
             </x-slot>
         @endif
 
-        <div
-            wire:ignore
-            x-load
-            x-load-src="{{ FilamentAsset::getAlpineComponentSrc('calendar', 'guava/calendar') }}"
+        <div wire:ignore x-load x-load-src="{{ FilamentAsset::getAlpineComponentSrc('calendar', 'guava/calendar') }}"
             x-data="calendar({
                 view: @js($this->getCalendarView()),
                 locale: @js($this->getLocale()),
@@ -52,14 +46,12 @@
                 theme: @js($this->getTheme()),
                 options: @js($this->getOptions()),
                 eventAssetUrl: @js(FilamentAsset::getAlpineComponentSrc('calendar-event', 'guava/calendar')),
-            })"
-            @class(FilamentColor::getComponentClasses(ButtonComponent::class, 'primary'))
-        >
+            })" @class(FilamentColor::getComponentClasses(ButtonComponent::class, 'primary'))>
             <div data-calendar></div>
-            @if($this->hasContextMenu())
-                <x-guava-calendar::context-menu/>
+            @if ($this->hasContextMenu())
+                <x-guava-calendar::context-menu />
             @endif
         </div>
     </x-filament::section>
-        <x-filament-actions::modals/>
+    <x-filament-actions::modals />
 </x-filament-widgets::widget>

@@ -15,6 +15,13 @@ class CampusInfolist
             ->components([
                 TextEntry::make('name')
                     ->label('校區名稱'),
+                TextEntry::make('type')
+                    ->label('校區類別')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'school' => '學校',
+                        'cram_school' => '補習班',
+                        default => $state,
+                    }),
                 TextEntry::make('address')
                     ->label('地址'),
                 TextEntry::make('phone')

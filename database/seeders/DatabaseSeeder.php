@@ -28,9 +28,9 @@ class DatabaseSeeder extends Seeder
             SystemSettingSeeder::class,
         ]);
 
-        // 建立校務活動
+        // 建立國定假日事件
         $this->call([
-            SchoolEventSeeder::class,
+            NationalHolidaySeeder::class,
         ]);
 
         // 建立測試用戶

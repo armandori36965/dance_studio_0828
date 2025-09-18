@@ -43,6 +43,7 @@ return [
     'attendance_status' => '出勤狀態',
 
     // 校區相關欄位
+    'campus' => '校區',
     'campus_name' => '校區名稱',
     'address' => '地址',
     'phone' => '電話',
@@ -79,6 +80,19 @@ return [
     'performance_activity' => '表演活動',
     'meeting_activity' => '會議活動',
     'other_activity' => '其他活動',
+
+    // 校務事件類型（統一命名）
+    'national_holiday' => '國定假日',
+    'periodic_assessment' => '定期評量',
+    'disaster_drill' => '防災演練',
+    'school_anniversary' => '校慶活動',
+    'todo' => '代辦事項',
+    'other' => '其他',
+
+    // 選擇相關（統一命名）
+    'select_campus' => '選擇校區',
+    'select_type' => '選擇類型',
+    'select_option' => '選擇選項',
 
     // 角色相關欄位
     'role_name' => '角色名稱',

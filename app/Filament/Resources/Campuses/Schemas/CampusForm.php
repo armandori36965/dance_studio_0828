@@ -6,6 +6,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
 
 class CampusForm
@@ -14,11 +15,20 @@ class CampusForm
     {
         return $schema
             ->components([
-                // 校區名稱
+                // 校區名稱和類別並排
                 TextInput::make('name')
                     ->label(__('fields.campus_name'))
                     ->required()
-                    ->columnSpanFull(),
+                    ->columnSpan(1),
+                Select::make('type')
+                    ->label('校區類別')
+                    ->options([
+                        'school' => '學校',
+                        'cram_school' => '補習班',
+                    ])
+                    ->default('school')
+                    ->required()
+                    ->columnSpan(1),
 
                 // 聯絡資訊區塊 - 電話和郵件
                 TextInput::make('phone')
