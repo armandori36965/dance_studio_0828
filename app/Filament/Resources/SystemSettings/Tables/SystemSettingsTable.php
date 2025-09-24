@@ -211,6 +211,10 @@ class SystemSettingsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->extremePaginationLinks() // 顯示第一頁和最後一頁按鈕
+            ->paginated([10, 25, 50, 100]) // 設定每頁顯示筆數選項
+            ->defaultPaginationPageOption(10) // 預設每頁顯示10筆
+            ->paginationPageOptions([10, 25, 50, 100]) // 確保分頁選項正確設定
             ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc');
     }

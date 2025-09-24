@@ -65,25 +65,42 @@ class NationalHolidaySeeder extends Seeder
     {
         $this->command->info('開始建立國定假日事件...');
 
+        // 先清理現有的國定假日事件
+        $deletedCount = SchoolEvent::where('category', 'national_holiday')->delete();
+        if ($deletedCount > 0) {
+            $this->command->info("已清理 {$deletedCount} 個重複的國定假日事件");
+        }
+
+        $createdCount = 0;
         foreach ($this->holidays as $holiday) {
             $date = Carbon::parse($holiday['date']);
 
-            // 建立全域國定假日事件（不綁定特定校區）
-            SchoolEvent::create([
-                'title' => $holiday['name'],
-                'description' => "{$holiday['name']} - 全國各機關學校放假一日",
-                'start_time' => $date->copy()->startOfDay(),
-                'end_time' => $date->copy()->endOfDay(),
-                'category' => $holiday['type'],
-                'campus_id' => null, // 設為 null 表示全域事件
-                'created_by' => 1, // 假設管理員 ID 為 1
-                'status' => 'active',
-                'location' => '',
-            ]);
+            // 檢查是否已存在相同的事件
+            $existingEvent = SchoolEvent::where('description', $holiday['name'])
+                ->where('start_time', $date->copy()->startOfDay())
+                ->where('category', 'national_holiday')
+                ->first();
 
-            $this->command->info("已建立全域國定假日事件：{$holiday['name']} ({$holiday['date']})");
+            if (!$existingEvent) {
+                // 建立全域國定假日事件（不綁定特定校區）
+                SchoolEvent::create([
+                    'description' => $holiday['name'],
+                    'start_time' => $date->copy()->startOfDay(),
+                    'end_time' => $date->copy()->endOfDay(),
+                    'category' => $holiday['type'],
+                    'campus_id' => null, // 設為 null 表示全域事件
+                    'created_by' => 1, // 假設管理員 ID 為 1
+                    'status' => 'active',
+                    'location' => '全國',
+                ]);
+
+                $this->command->info("已建立全域國定假日事件：{$holiday['name']} ({$holiday['date']})");
+                $createdCount++;
+            } else {
+                $this->command->info("國定假日事件已存在，跳過：{$holiday['name']} ({$holiday['date']})");
+            }
         }
 
-        $this->command->info("國定假日事件建立完成！總共建立了 " . count($this->holidays) . " 個全域事件。");
+        $this->command->info("國定假日事件建立完成！總共建立了 {$createdCount} 個新事件。");
     }
 }

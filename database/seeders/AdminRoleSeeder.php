@@ -13,12 +13,14 @@ class AdminRoleSeeder extends Seeder
      */
     public function run(): void
     {
-        // 建立管理員角色
-        Role::create([
-            'name' => '管理員',
-            'description' => '系統管理員，擁有所有權限',
-            'is_active' => true,
-            'permissions' => [
+        // 建立管理員角色（如果不存在則建立）
+        Role::firstOrCreate(
+            ['name' => '管理員'],
+            [
+                'description' => '系統管理員，擁有所有權限',
+                'is_active' => true,
+                'requires_campus' => false,
+                'permissions' => [
                 // 校區管理權限
                 'campus.view',
                 'campus.create',
@@ -72,8 +74,9 @@ class AdminRoleSeeder extends Seeder
                 'role.manage',
                 'system.setting',
                 'audit.log',
-            ],
-        ]);
+                ],
+            ]
+        );
 
         $this->command->info('管理員角色已建立完成！');
     }

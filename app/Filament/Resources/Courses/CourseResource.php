@@ -6,6 +6,7 @@ use App\Filament\Resources\Courses\Pages\CreateCourse;
 use App\Filament\Resources\Courses\Pages\EditCourse;
 use App\Filament\Resources\Courses\Pages\ListCourses;
 use App\Filament\Resources\Courses\Pages\ViewCourse;
+use App\Filament\Resources\Courses\Pages\CourseDashboard;
 use App\Filament\Resources\Courses\Schemas\CourseForm;
 use App\Filament\Resources\Courses\Schemas\CourseInfolist;
 use App\Filament\Resources\Courses\Tables\CoursesTable;
@@ -70,7 +71,7 @@ class CourseResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\Courses\Relations\CourseSessions::class,
         ];
     }
 
@@ -79,7 +80,8 @@ class CourseResource extends Resource
         return [
             'index' => ListCourses::route('/'),
             'create' => CreateCourse::route('/create'),
-            'view' => ViewCourse::route('/{record}'),
+            'view' => CourseDashboard::route('/{record}'),
+            'details' => ViewCourse::route('/{record}/details'),
             'edit' => EditCourse::route('/{record}/edit'),
         ];
     }

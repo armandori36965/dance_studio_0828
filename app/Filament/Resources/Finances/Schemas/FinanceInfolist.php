@@ -26,9 +26,9 @@ class FinanceInfolist
                 TextEntry::make('payment_method'),
                 TextEntry::make('reference_number'),
                 TextEntry::make('created_at')
-                    ->dateTime(),
+                    ->dateTime('Y-m-d H:i'), // 使用24小時制格式
                 TextEntry::make('updated_at')
-                    ->dateTime(),
+                    ->dateTime('Y-m-d H:i'), // 使用24小時制格式
             ]);
     }
 }

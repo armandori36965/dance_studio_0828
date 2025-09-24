@@ -23,7 +23,10 @@ class CoursesTable
                 TextColumn::make('name')
                     ->label(__('fields.course_name'))
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->action(function ($record) {
+                        return redirect()->route('filament.admin.resources.courses.view', $record);
+                    }),
 
                 // 課程等級 - 預設顯示
                 TextColumn::make('level')
@@ -35,23 +38,81 @@ class CoursesTable
                         'competition' => '比賽隊',
                         default => $state,
                     })
-                    ->sortable(),
+                    ->sortable()
+                    ->action(function ($record) {
+                        return redirect()->route('filament.admin.resources.courses.view', $record);
+                    }),
 
                 // 授課老師 - 預設顯示
                 TextColumn::make('teacher.name')
                     ->label('授課老師')
                     ->sortable()
-                    ->placeholder('未指派'),
+                    ->placeholder('未指派')
+                    ->action(function ($record) {
+                        return redirect()->route('filament.admin.resources.courses.view', $record);
+                    }),
 
                 // 學員數 - 預設顯示
                 TextColumn::make('student_count')
                     ->label(__('fields.student_count'))
-                    ->sortable(),
+                    ->sortable()
+                    ->action(function ($record) {
+                        return redirect()->route('filament.admin.resources.courses.view', $record);
+                    }),
+
+                // 總共堂數 - 預設顯示
+                TextColumn::make('total_sessions')
+                    ->label('總共堂數')
+                    ->formatStateUsing(fn ($state) => $state ? $state . '堂' : '-')
+                    ->sortable()
+                    ->action(function ($record) {
+                        return redirect()->route('filament.admin.resources.courses.view', $record);
+                    }),
+
+                // 上課週期 - 預設顯示
+                TextColumn::make('weekdays')
+                    ->label('上課週期')
+                    ->getStateUsing(function ($record) {
+                        // 如果沒有設定週期課程，直接返回
+                        if (!$record->is_weekly_course) {
+                            return '-';
+                        }
+
+                        $state = $record->weekdays;
+
+                        // 如果沒有上課日資料，返回
+                        if (!$state || !is_array($state) || empty($state)) {
+                            return '-';
+                        }
+
+                        $weekdayNames = [
+                            '0' => '日',
+                            '1' => '一',
+                            '2' => '二',
+                            '3' => '三',
+                            '4' => '四',
+                            '5' => '五',
+                            '6' => '六',
+                        ];
+
+                        $weekdays = array_map(function ($day) use ($weekdayNames) {
+                            return $weekdayNames[$day] ?? $day;
+                        }, $state);
+
+                        return '週' . implode('、週', $weekdays);
+                    })
+                    ->sortable(false)
+                    ->action(function ($record) {
+                        return redirect()->route('filament.admin.resources.courses.view', $record);
+                    }),
 
                 // 校區名稱 - 預設顯示
                 TextColumn::make('campus.name')
                     ->label(__('fields.campus_name'))
-                    ->sortable(),
+                    ->sortable()
+                    ->action(function ($record) {
+                        return redirect()->route('filament.admin.resources.courses.view', $record);
+                    }),
 
                 // 課程價格 - 隱藏
                 TextColumn::make('price')
@@ -101,14 +162,14 @@ class CoursesTable
                 // 建立時間 - 隱藏
                 TextColumn::make('created_at')
                     ->label(__('fields.created_at'))
-                    ->dateTime()
+                    ->dateTime('Y-m-d H:i') // 使用24小時制格式
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 // 更新時間 - 隱藏
                 TextColumn::make('updated_at')
                     ->label(__('fields.updated_at'))
-                    ->dateTime()
+                    ->dateTime('Y-m-d H:i') // 使用24小時制格式
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -133,6 +194,12 @@ class CoursesTable
                         return \App\Models\Campus::orderBy('sort_order', 'asc')->pluck('name', 'id');
                     })
                     ->searchable(),
+                SelectFilter::make('is_weekly_course')
+                    ->label('課程類型')
+                    ->options([
+                        '1' => '週期課程',
+                        '0' => '單次課程',
+                    ]),
             ])
             ->recordActions([
                 EditAction::make()
@@ -145,6 +212,10 @@ class CoursesTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->extremePaginationLinks() // 顯示第一頁和最後一頁按鈕
+            ->paginated([10, 25, 50, 100]) // 設定每頁顯示筆數選項
+            ->defaultPaginationPageOption(10) // 預設每頁顯示10筆
+            ->paginationPageOptions([10, 25, 50, 100]) // 確保分頁選項正確設定
             ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc');
     }

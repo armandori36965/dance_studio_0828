@@ -49,6 +49,7 @@ class UserForm
                     })
                     ->searchable()
                     ->placeholder('選擇用戶角色')
+                    ->required() // 設為必選
                     ->live() // 啟用即時更新
                     ->afterStateUpdated(function ($state, callable $set) {
                         // 根據角色決定是否需要校區

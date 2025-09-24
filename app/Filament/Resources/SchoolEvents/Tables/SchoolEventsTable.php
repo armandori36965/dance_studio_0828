@@ -23,40 +23,37 @@ class SchoolEventsTable
     {
         return $table
             ->columns([
-                                // 核心欄位 - 不可切換
-                TextColumn::make('title')
-                    ->label('標題')
+                // 核心欄位 - 不可切換，按新順序排列
+                TextColumn::make('category')
+                    ->label('類型')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'todo' => 'primary',
+                        'school' => 'info',
+                        'other' => 'gray',
+                        'national_holiday' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'todo' => __('fields.todo'),
+                        'school' => __('fields.school'),
+                        'other' => __('fields.other'),
+                        'national_holiday' => __('fields.national_holiday'),
+                        default => $state,
+                    })
+                    ->toggleable(false),
+
+                TextColumn::make('description')
+                    ->label('描述')
+                    ->limit(50)
                     ->searchable()
-                    ->sortable()
                     ->toggleable(false),
 
                 TextColumn::make('start_time')
                     ->label('開始時間')
                     ->dateTime('Y-m-d H:i')
+                    ->formatStateUsing(fn ($state) => $state ? $state->format('Y-m-d H:i') : '')
                     ->sortable()
-                    ->toggleable(false),
-
-                TextColumn::make('category')
-                    ->label('類型')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'national_holiday' => 'danger',
-                        'periodic_assessment' => 'warning',
-                        'disaster_drill' => 'info',
-                        'school_anniversary' => 'success',
-                        'todo' => 'primary',
-                        'other' => 'gray',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'national_holiday' => __('fields.national_holiday'),
-                        'periodic_assessment' => __('fields.periodic_assessment'),
-                        'disaster_drill' => __('fields.disaster_drill'),
-                        'school_anniversary' => __('fields.school_anniversary'),
-                        'todo' => __('fields.todo'),
-                        'other' => __('fields.other'),
-                        default => $state,
-                    })
                     ->toggleable(false),
 
                 TextColumn::make('campus.name')
@@ -72,17 +69,17 @@ class SchoolEventsTable
                     })
                     ->toggleable(false),
 
-
                 // 可選欄位 - 可切換
-                TextColumn::make('description')
-                    ->label('描述')
-                    ->limit(50)
+                TextColumn::make('title')
+                    ->label('標題')
                     ->searchable()
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('end_time')
                     ->label('結束時間')
                     ->dateTime('Y-m-d H:i')
+                    ->formatStateUsing(fn ($state) => $state ? $state->format('Y-m-d H:i') : '')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -95,13 +92,13 @@ class SchoolEventsTable
 
                 TextColumn::make('created_at')
                     ->label('建立時間')
-                    ->dateTime()
+                    ->dateTime('Y-m-d H:i') // 使用24小時制格式
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('updated_at')
                     ->label('更新時間')
-                    ->dateTime()
+                    ->dateTime('Y-m-d H:i') // 使用24小時制格式
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -109,12 +106,10 @@ class SchoolEventsTable
                 SelectFilter::make('category')
                     ->label(__('fields.event_type'))
                     ->options([
-                        'national_holiday' => __('fields.national_holiday'),
-                        'periodic_assessment' => __('fields.periodic_assessment'),
-                        'disaster_drill' => __('fields.disaster_drill'),
-                        'school_anniversary' => __('fields.school_anniversary'),
                         'todo' => __('fields.todo'),
+                        'school' => __('fields.school'),
                         'other' => __('fields.other'),
+                        'national_holiday' => __('fields.national_holiday'),
                     ]),
 
                 SelectFilter::make('campus_id')
@@ -150,7 +145,6 @@ class SchoolEventsTable
             ->extremePaginationLinks() // 改善分頁顯示
             ->paginated([10, 25, 50, 100]) // 設定每頁顯示筆數選項
             ->defaultPaginationPageOption(10) // 預設每頁顯示10筆
-            ->reorderable('sort_order')
-            ->defaultSort('sort_order', 'asc'); // 預設按排序欄位排序
+            ->defaultSort('start_time', 'asc'); // 預設按開始時間排序
     }
 }

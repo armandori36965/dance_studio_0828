@@ -86,7 +86,8 @@ return [
     'periodic_assessment' => '定期評量',
     'disaster_drill' => '防災演練',
     'school_anniversary' => '校慶活動',
-    'todo' => '代辦事項',
+    'todo' => '代辦',
+    'school' => '校務',
     'other' => '其他',
 
     // 選擇相關（統一命名）
@@ -211,8 +212,8 @@ return [
     'attendance' => '出勤記錄',
     'finances' => '財務',
     'finance' => '財務',
-    'school_events' => '校務事件',
-    'school_event' => '校務事件',
+    'school_events' => '事件',
+    'school_event' => '事件',
     'roles' => '角色',
     'role' => '角色',
     'system_settings' => '系統設定',

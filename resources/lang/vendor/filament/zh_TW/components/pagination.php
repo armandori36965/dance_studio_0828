@@ -4,7 +4,7 @@ return [
 
     'label' => '分頁導航',
 
-    'overview' => '正在顯示第 :first 至 :last 項結果，共 :total 項',
+    'overview' => '{1} 正在顯示第 1 項結果，共 1 項|[2,*] 正在顯示第 :first 至 :last 項結果，共 :total 項',
 
     'fields' => [
 

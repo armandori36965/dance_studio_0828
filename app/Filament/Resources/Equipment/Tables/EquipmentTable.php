@@ -55,12 +55,12 @@ class EquipmentTable
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label(__('fields.created_at'))
-                    ->dateTime()
+                    ->dateTime('Y-m-d H:i') // 使用24小時制格式
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
                     ->label(__('fields.updated_at'))
-                    ->dateTime()
+                    ->dateTime('Y-m-d H:i') // 使用24小時制格式
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -88,6 +88,10 @@ class EquipmentTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->extremePaginationLinks() // 顯示第一頁和最後一頁按鈕
+            ->paginated([10, 25, 50, 100]) // 設定每頁顯示筆數選項
+            ->defaultPaginationPageOption(10) // 預設每頁顯示10筆
+            ->paginationPageOptions([10, 25, 50, 100]) // 確保分頁選項正確設定
             ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc');
     }

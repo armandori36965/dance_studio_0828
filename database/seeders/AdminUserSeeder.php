@@ -23,17 +23,19 @@ class AdminUserSeeder extends Seeder
             return;
         }
 
-        // 建立管理員帳號
-        User::create([
-            'name' => '管理員',
-            'email' => 'admin@dance.com',
-            'password' => Hash::make('password123'),
-            'email_verified_at' => now(),
-            'role_id' => $adminRole->id,
-        ]);
+        // 建立管理員帳號（如果不存在則建立）
+        User::firstOrCreate(
+            ['email' => 'admin@dance.com'],
+            [
+                'name' => '管理員',
+                'password' => Hash::make('111111'),
+                'email_verified_at' => now(),
+                'role_id' => $adminRole->id,
+            ]
+        );
 
         $this->command->info('管理員帳號已建立完成！');
         $this->command->info('Email: admin@dance.com');
-        $this->command->info('Password: password123');
+        $this->command->info('Password: 111111');
     }
 }

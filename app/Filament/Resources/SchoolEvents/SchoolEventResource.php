@@ -24,13 +24,13 @@ class SchoolEventResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
 
     // 設定導航標籤
-    protected static ?string $navigationLabel = '校務事件';
+    protected static ?string $navigationLabel = '事件';
 
     // 設定模型標籤（單數）
-    protected static ?string $modelLabel = '校務事件';
+    protected static ?string $modelLabel = '事件';
 
     // 設定模型標籤（複數）
-    protected static ?string $pluralModelLabel = '校務事件';
+    protected static ?string $pluralModelLabel = '事件';
 
     // 設定排序順序
     protected static ?int $navigationSort = 2;

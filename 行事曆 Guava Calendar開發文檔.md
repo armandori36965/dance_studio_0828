@@ -100,52 +100,81 @@ dance_studio_0828/
 
 ## 🔧 核心組件開發
 
-### 1. 行事曆 Widget 重構原則
+### 1. 行事曆 Widget 實際實現
 
-#### 重構目標
+#### 當前實現狀態
 
-**⚠️ 重要：遵循 Filament 4.x 和 SDUI 原則**
+**✅ 已完成：符合 Filament 4.x 和 Guava Calendar 規範**
 
--   **檔案大小控制**：CalendarWidget.php 應控制在 200-300 行
--   **單一職責原則**：Widget 只負責核心行事曆功能和互動處理
--   **模組化設計**：使用服務類和 Trait 分離功能
--   **SDUI 原則**：使用 PHP 結構化配置對象定義 UI，避免複雜前端邏輯
+-   **檔案大小**：CalendarWidget.php 目前 565 行，功能完整
+-   **單一職責**：Widget 負責核心行事曆功能和互動處理
+-   **模組化設計**：使用快取、篩選和動作管理
+-   **SDUI 原則**：使用 PHP 結構化配置對象定義 UI
 
-#### 基本 CalendarWidget 結構（符合官方規範）
+#### 實際 CalendarWidget 結構
 
 ```php
 <?php
 
 namespace App\Filament\Widgets;
 
-use Guava\Calendar\Widgets\CalendarWidget as BaseCalendarWidget;
-use Guava\Calendar\Enums\CalendarViewType;
-use Guava\Calendar\ValueObjects\FetchInfo;
-use Guava\Calendar\ValueObjects\EventClickInfo;
-use Guava\Calendar\ValueObjects\EventDropInfo;
-use Guava\Calendar\ValueObjects\EventResizeInfo;
-use Guava\Calendar\Filament\Actions\CreateAction;
-use Carbon\WeekDay;
 use App\Models\SchoolEvent;
 use App\Models\Course;
 use App\Models\Campus;
+use Guava\Calendar\Filament\CalendarWidget as BaseCalendarWidget;
+use Guava\Calendar\Enums\CalendarViewType;
+use Guava\Calendar\ValueObjects\FetchInfo;
+use Guava\Calendar\ValueObjects\EventClickInfo;
+use Guava\Calendar\Filament\Actions\CreateAction;
+use Carbon\WeekDay;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Filament\Notifications\Notification;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Form;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 
-class CalendarWidget extends BaseCalendarWidget
+class CalendarWidget extends BaseCalendarWidget implements HasActions
 {
-    // 預設使用資源時間網格週視圖
-    protected CalendarViewType $calendarView = CalendarViewType::ResourceTimeGridWeek;
+    use InteractsWithActions, InteractsWithForms;
 
-    // 設定週日為第一天（Guava Calendar 方式）
+    // 事件過濾狀態
+    public bool $showSchoolEvents = true;
+    public bool $showCourses = true;
+
+    // 篩選器表單數據
+    public array $filterData = [
+        'search' => '',
+        'showSchoolEvents' => true,
+        'showCourses' => true,
+        'category' => '',
+        'campus_id' => '',
+    ];
+
+    // 即時搜尋屬性
+    public string $tableSearch = '';
+
+    // 預設使用月視圖
+    protected CalendarViewType $calendarView = CalendarViewType::DayGridMonth;
+
+    // 設定週日為第一天
     protected WeekDay $firstDay = WeekDay::Sunday;
 
-    // 設定本地化（Guava Calendar 方式）
+    // 設定本地化
     protected ?string $locale = 'zh-tw';
 
-    // 設定每天最大事件數（Guava Calendar 方式）
+    // 設定每天最大事件數 - 啟用限制功能
     protected bool $dayMaxEvents = true;
 
-    // 使用 Filament 時區（Guava Calendar 方式）
+    // 使用 Filament 時區
     protected bool $useFilamentTimezone = true;
 
     // 啟用互動功能
@@ -156,47 +185,116 @@ class CalendarWidget extends BaseCalendarWidget
     protected bool $eventResizeEnabled = true;
 
     /**
-     * 獲取行事曆選項（Guava Calendar 方式）
+     * 設定行事曆選項 - 固定日期格子大小並設定24小時制
      */
     public function getOptions(): array
     {
-        return [
-            'headerToolbar' => [
-                'left' => 'prev,next today',
-                'center' => 'title',
-                'right' => 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,resourceTimeGridWeek'
-            ],
-            'buttonText' => [
-                'today' => '今天',
-                'month' => '月',
-                'week' => '週',
-                'day' => '日',
-                'list' => '列表',
-                'resourceTimeGridWeek' => '資源週'
-            ],
-            'resourceAreaWidth' => '20%',
-            'resourceLabelText' => '校區',
+        $options = parent::getOptions();
+
+        // 設定每天最大事件數（數字值，FullCalendar 支援）
+        $options['dayMaxEvents'] = 3;
+
+        // 設定固定週模式，確保日期格子大小一致
+        $options['fixedWeekCount'] = true; // 固定顯示6週
+        $options['showNonCurrentDates'] = true; // 顯示非當月日期
+
+        // 設定24小時制時間格式
+        $options['eventTimeFormat'] = [
+            'hour' => '2-digit',
+            'minute' => '2-digit',
+            'hour12' => false, // 使用24小時制
         ];
+
+        // 設定時間軸標籤格式為24小時制
+        $options['slotLabelFormat'] = [
+            'hour' => '2-digit',
+            'minute' => '2-digit',
+            'hour12' => false, // 使用24小時制
+        ];
+
+        return $options;
     }
 
     /**
-     * 獲取行事曆事件
+     * 獲取行事曆事件 - 查詢校務事件和課程
      */
     protected function getEvents(FetchInfo $info): Collection|array|Builder
     {
-        return collect()
-            ->push(...SchoolEvent::query()
-                ->where('status', 'active')
-                ->whereDate('start_time', '>=', $info->start)
-                ->whereDate('start_time', '<=', $info->end)
-                ->with('campus')
-                ->get())
-            ->push(...Course::query()
-                ->where('is_active', true)
-                ->whereDate('start_time', '>=', $info->start)
-                ->whereDate('start_time', '<=', $info->end)
-                ->with('campus')
-                ->get());
+        // 建立快取鍵，包含日期範圍和過濾狀態以確保數據準確性
+        $searchTerm = $this->tableSearch ?: $this->filterData['search'];
+        $cacheKey = 'calendar_events_' . $info->start->format('Y-m-d') . '_' . $info->end->format('Y-m-d') .
+                   '_school_' . ($this->showSchoolEvents ? '1' : '0') .
+                   '_courses_' . ($this->showCourses ? '1' : '0') .
+                   '_search_' . md5($searchTerm) .
+                   '_category_' . $this->filterData['category'] .
+                   '_campus_' . $this->filterData['campus_id'];
+
+        return Cache::remember($cacheKey, 60, function () use ($info) {
+            $events = collect();
+
+            // 查詢校務事件（根據過濾設定）
+            if ($this->showSchoolEvents) {
+                $schoolEventsQuery = SchoolEvent::query()
+                    ->where('status', 'active')
+                    ->where(function ($query) use ($info) {
+                        $query->where('start_time', '<=', $info->end)
+                              ->where('end_time', '>=', $info->start);
+                    })
+                    ->with('campus');
+
+                // 應用搜尋篩選
+                $searchTerm = $this->tableSearch ?: $this->filterData['search'];
+                if (!empty($searchTerm)) {
+                    $schoolEventsQuery->where(function ($query) use ($searchTerm) {
+                        $query->where('title', 'like', "%{$searchTerm}%")
+                              ->orWhere('description', 'like', "%{$searchTerm}%");
+                    });
+                }
+
+                // 應用類型篩選
+                if (!empty($this->filterData['category'])) {
+                    $schoolEventsQuery->where('category', $this->filterData['category']);
+                }
+
+                // 應用校區篩選
+                if (!empty($this->filterData['campus_id'])) {
+                    $schoolEventsQuery->where('campus_id', $this->filterData['campus_id']);
+                }
+
+                $schoolEvents = $schoolEventsQuery->get();
+                $events = $events->merge($schoolEvents);
+            }
+
+            // 查詢課程事件（根據過濾設定）
+            if ($this->showCourses) {
+                $coursesQuery = Course::query()
+                    ->where('is_active', true)
+                    ->where(function ($query) use ($info) {
+                        $query->where('start_time', '<=', $info->end)
+                              ->where('end_time', '>=', $info->start);
+                    })
+                    ->with('campus');
+
+                // 應用搜尋篩選
+                if (!empty($this->filterData['search'])) {
+                    $search = $this->filterData['search'];
+                    $coursesQuery->where(function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%")
+                              ->orWhere('description', 'like', "%{$search}%");
+                    });
+                }
+
+                // 應用校區篩選
+                if (!empty($this->filterData['campus_id'])) {
+                    $coursesQuery->where('campus_id', $this->filterData['campus_id']);
+                }
+
+                $courses = $coursesQuery->get();
+                $events = $events->merge($courses);
+            }
+
+            return $events;
+        });
     }
 
     /**
@@ -214,34 +312,41 @@ class CalendarWidget extends BaseCalendarWidget
      */
     protected function onEventClick(EventClickInfo $info, Model $event, ?string $action = null): void
     {
-        $calendarEvent = $info->event;
-        $extendedProps = $calendarEvent->extendedProps ?? [];
+        // 如果沒有指定動作，顯示通知
+        if (!$action) {
+            $calendarEvent = $info->event;
+            $title = $calendarEvent->title ?? '無標題';
 
-        $title = $calendarEvent->title ?? '無標題';
-        $type = $this->getEventTypeLabel($extendedProps['type'] ?? '');
-        $campus = $extendedProps['campus'] ?? '未知校區';
+            Notification::make()
+                ->title('事件名稱')
+                ->body($title)
+                ->info()
+                ->send();
+            return;
+        }
 
-        Notification::make()
-            ->title('事件詳情')
-            ->body("標題：{$title}\n類型：{$type}\n校區：{$campus}")
-            ->info()
-            ->send();
+        // 如果有指定動作，觸發該動作
+        $this->mountAction($action);
     }
 
     /**
      * 事件拖放處理
      */
-    protected function onEventDrop(EventDropInfo $info, Model $event): bool
+    protected function onEventDrop($info, $event): bool
     {
         $calendarEvent = $info->event;
-        $newStart = $calendarEvent->getStart()->format('Y-m-d H:i');
+        $newStart = $calendarEvent->getStart();
+        $newEnd = $calendarEvent->getEnd();
 
-        // 更新資料庫中的事件時間
-        $this->updateEventTime($calendarEvent, $newStart, null);
+        // 計算時間差並更新事件
+        $duration = $event->end_time->diffInMinutes($event->start_time);
+        $event->start_time = $newStart;
+        $event->end_time = $newStart->copy()->addMinutes($duration);
+        $event->save();
 
         Notification::make()
             ->title('事件移動')
-            ->body("事件已移動到 {$newStart}")
+            ->body("事件已移動到 {$newStart->format('Y-m-d H:i')}")
             ->success()
             ->send();
 
@@ -251,17 +356,18 @@ class CalendarWidget extends BaseCalendarWidget
     /**
      * 事件調整大小處理
      */
-    public function onEventResize(EventResizeInfo $info, Model $event): bool
+    public function onEventResize($info, $event): bool
     {
         $calendarEvent = $info->event;
-        $newEnd = $calendarEvent->getEnd()->format('Y-m-d H:i');
+        $newEnd = $calendarEvent->getEnd();
 
         // 更新資料庫中的事件結束時間
-        $this->updateEventTime($calendarEvent, null, $newEnd);
+        $event->end_time = $newEnd;
+        $event->save();
 
         Notification::make()
             ->title('事件調整')
-            ->body("事件已調整結束時間到 {$newEnd}")
+            ->body("事件已調整結束時間到 {$newEnd->format('Y-m-d H:i')}")
             ->success()
             ->send();
 
@@ -269,70 +375,146 @@ class CalendarWidget extends BaseCalendarWidget
     }
 
     /**
-     * 更新事件時間的輔助方法
+     * 獲取 header actions - 視圖切換按鈕和過濾按鈕
      */
-    protected function updateEventTime($calendarEvent, ?string $newStart, ?string $newEnd): void
+    public function getHeaderActions(): array
     {
-        $extendedProps = $calendarEvent->extendedProps ?? [];
-        $type = $extendedProps['type'] ?? '';
-        $modelId = $extendedProps['model_id'] ?? null;
+        return [
+            // 即時搜尋欄位
+            Action::make('search')
+                ->label('搜尋')
+                ->icon('heroicon-o-magnifying-glass')
+                ->color('gray')
+                ->form([
+                    TextInput::make('search')
+                        ->label('搜尋事件')
+                        ->placeholder('搜尋事件標題或描述...')
+                        ->default($this->filterData['search'])
+                        ->live()
+                        ->afterStateUpdated(function ($state) {
+                            $this->filterData['search'] = $state;
+                            $this->dispatch('calendar--refresh');
+                        }),
+                ])
+                ->fillForm([
+                    'search' => $this->filterData['search'],
+                ])
+                ->action(function (array $data) {
+                    $this->filterData['search'] = $data['search'];
+                    $this->dispatch('calendar--refresh');
+                }),
 
-        if (!$modelId) return;
+            // 篩選器下拉選單
+            Action::make('filters')
+                ->label('篩選')
+                ->icon('heroicon-o-funnel')
+                ->color('gray')
+                ->form([
+                    Toggle::make('showSchoolEvents')
+                        ->label('顯示校務事件')
+                        ->default($this->showSchoolEvents),
+                    Toggle::make('showCourses')
+                        ->label('顯示課程')
+                        ->default($this->showCourses),
+                    Select::make('category')
+                        ->label('事件類型')
+                        ->options([
+                            '' => '全部',
+                            'national_holiday' => '國定假日',
+                            'periodic_assessment' => '定期評量',
+                            'disaster_drill' => '防災演練',
+                            'school_anniversary' => '校慶活動',
+                            'todo' => '代辦事項',
+                            'other' => '其他',
+                        ])
+                        ->default($this->filterData['category']),
+                    Select::make('campus_id')
+                        ->label('校區')
+                        ->options(Campus::pluck('name', 'id'))
+                        ->searchable()
+                        ->default($this->filterData['campus_id']),
+                ])
+                ->fillForm([
+                    'showSchoolEvents' => $this->showSchoolEvents,
+                    'showCourses' => $this->showCourses,
+                    'category' => $this->filterData['category'],
+                    'campus_id' => $this->filterData['campus_id'],
+                ])
+                ->action(function (array $data) {
+                    $this->showSchoolEvents = $data['showSchoolEvents'];
+                    $this->showCourses = $data['showCourses'];
+                    $this->filterData['category'] = $data['category'];
+                    $this->filterData['campus_id'] = $data['campus_id'];
 
-        try {
-            switch ($type) {
-                case 'school_event':
-                    $event = SchoolEvent::find($modelId);
-                    if ($event) {
-                        if ($newStart) $event->start_time = $newStart;
-                        if ($newEnd) $event->end_time = $newEnd;
-                        $event->save();
-                    }
-                    break;
-                case 'course':
-                    $course = Course::find($modelId);
-                    if ($course) {
-                        if ($newStart) $course->start_time = $newStart;
-                        if ($newEnd) $course->end_time = $newEnd;
-                        $course->save();
-                    }
-                    break;
-            }
-        } catch (\Exception $e) {
-            Notification::make()
-                ->title('更新失敗')
-                ->body('無法更新事件時間：' . $e->getMessage())
-                ->danger()
-                ->send();
-        }
+                    $this->dispatch('calendar--refresh');
+                }),
+
+            // 視圖切換下拉選單
+            Action::make('view_switcher')
+                ->label('視圖')
+                ->icon('heroicon-o-squares-2x2')
+                ->color('gray')
+                ->form([
+                    Select::make('view')
+                        ->label('選擇視圖')
+                        ->options([
+                            'dayGridMonth' => '月視圖',
+                            'timeGridWeek' => '週視圖',
+                            'timeGridDay' => '日視圖',
+                            'listWeek' => '列表視圖',
+                        ])
+                        ->default($this->getCurrentView()),
+                ])
+                ->fillForm([
+                    'view' => $this->getCurrentView(),
+                ])
+                ->action(function (array $data) {
+                    $this->setOption('view', $data['view']);
+                }),
+        ];
     }
 
     /**
-     * 獲取事件類型標籤
-     */
-    protected function getEventTypeLabel(string $type): string
-    {
-        return match ($type) {
-            'school_event' => '校務活動',
-            'course' => '課程',
-            default => '未知類型',
-        };
-    }
-
-    /**
-     * 創建校務活動動作（符合官方規範）
+     * 創建校務活動動作
      */
     public function createSchoolEventAction(): CreateAction
     {
-        return $this->createAction(SchoolEvent::class);
+        return $this->createAction(SchoolEvent::class)
+            ->label('新增校務事件')
+            ->modalHeading('新增校務事件');
     }
 
     /**
-     * 創建課程動作（符合官方規範）
+     * 創建課程動作
      */
     public function createCourseAction(): CreateAction
     {
-        return $this->createAction(Course::class);
+        return $this->createAction(Course::class)
+            ->label('新增課程')
+            ->modalHeading('新增課程');
+    }
+
+    /**
+     * 日期點擊上下文選單動作
+     */
+    protected function getDateClickContextMenuActions(): array
+    {
+        return [
+            $this->createSchoolEventAction(),
+            $this->createCourseAction(),
+        ];
+    }
+
+    /**
+     * 事件點擊上下文選單動作
+     */
+    protected function getEventClickContextMenuActions(): array
+    {
+        return [
+            $this->viewAction(),
+            $this->editAction(),
+            $this->deleteAction(),
+        ];
     }
 }
 ```
@@ -922,7 +1104,7 @@ trait HasCalendarFilters
 
 **所有模型都已正確實現 Guava Calendar 接口，可直接使用！**
 
-#### 模型接口確認
+#### 實際模型接口實現
 
 ```php
 // SchoolEvent.php - 已實現 Eventable 接口
@@ -930,21 +1112,50 @@ class SchoolEvent extends Model implements Eventable
 {
     public function toCalendarEvent(): CalendarEvent
     {
-        return CalendarEvent::make()
-            ->key('event_' . $this->id)
+        // 為沒有 ID 的事件生成唯一 key
+        $key = $this->id ?: 'temp_' . md5($this->title . $this->start_time->toDateTimeString());
+
+        $event = CalendarEvent::make()
             ->title($this->title)
             ->start($this->start_time)
             ->end($this->end_time ?? $this->start_time->addHours(2))
-            ->backgroundColor($this->campus?->color ?? '#3B82F6') // 使用校區顏色
+            ->allDay(false)
+            ->backgroundColor($this->getDefaultEventColor())
             ->textColor('#ffffff')
             ->resourceId('campus_' . $this->campus_id)
+            ->key($key)
             ->extendedProps([
                 'model' => static::class,
-                'key' => 'event_' . $this->id,
                 'type' => 'school_event',
                 'model_id' => $this->id,
-                // ... 其他屬性
+                'key' => $key,
+                'description' => $this->description,
+                'campus' => $this->campus?->name,
+                'location' => $this->location,
+                'category' => $this->category,
+                'status' => $this->status,
             ]);
+
+        // 國定假日使用背景顯示
+        if ($this->category === 'national_holiday') {
+            $event->display('background')
+                  ->allDay(true); // 國定假日設為全天事件
+        }
+
+        return $event;
+    }
+
+    /**
+     * 獲取預設事件顏色（使用校區顏色）
+     */
+    protected function getDefaultEventColor(): string
+    {
+        // 國定假日使用特殊的紅色背景
+        if ($this->category === 'national_holiday') {
+            return '#DC2626'; // 紅色背景，表示國定假日
+        }
+
+        return $this->campus?->color ?? '#6B7280';
     }
 }
 
@@ -953,21 +1164,39 @@ class Course extends Model implements Eventable
 {
     public function toCalendarEvent(): CalendarEvent
     {
-        return CalendarEvent::make()
-            ->key('course_' . $this->id)
+        // 為沒有 ID 的事件生成唯一 key
+        $key = $this->id ?: 'temp_' . md5($this->name . $this->start_time->toDateTimeString());
+
+        $event = CalendarEvent::make()
             ->title($this->name)
             ->start($this->start_time)
             ->end($this->end_time ?? $this->start_time->addHours(1))
-            ->backgroundColor($this->campus?->color ?? '#3B82F6') // 使用校區顏色
+            ->allDay(false)
+            ->backgroundColor($this->getCourseColor())
             ->textColor('#ffffff')
             ->resourceId('campus_' . $this->campus_id)
+            ->key($key)
             ->extendedProps([
                 'model' => static::class,
-                'key' => 'course_' . $this->id,
                 'type' => 'course',
                 'model_id' => $this->id,
-                // ... 其他屬性
+                'key' => $key,
+                'description' => $this->description,
+                'campus' => $this->campus?->name,
+                'level' => $this->level,
+                'price' => $this->price,
+                'student_count' => $this->student_count,
             ]);
+
+        return $event;
+    }
+
+    /**
+     * 獲取課程顏色（使用校區顏色）
+     */
+    protected function getCourseColor(): string
+    {
+        return $this->campus?->color ?? '#6B7280';
     }
 }
 
@@ -978,7 +1207,7 @@ class Campus extends Model implements Resourceable
     {
         return CalendarResource::make('campus_' . $this->id)
             ->title($this->name)
-            ->eventBackgroundColor($this->color ?? '#3B82F6') // 校區顏色
+            ->eventBackgroundColor($this->color ?? '#3B82F6')
             ->extendedProps([
                 'campus_id' => $this->id,
                 'address' => $this->address,
@@ -995,6 +1224,7 @@ class Campus extends Model implements Resourceable
 2. **符合專案架構**：與現有的 Filament 資源完全整合
 3. **資料一致性**：使用相同的模型確保資料一致性
 4. **維護便利**：只需維護一套模型檔案
+5. **特殊功能**：支援國定假日背景顯示和校區顏色系統
 
 ---
 
@@ -1048,20 +1278,17 @@ public function toCalendarResource(): CalendarResource
 
 ---
 
-## 📊 重構效果分析
+## 📊 實際實現效果分析
 
 ### 1. 檔案大小控制
 
-| 檔案類型      | 檔案名稱                  | 預估行數   | 職責範圍                 |
-| ------------- | ------------------------- | ---------- | ------------------------ |
-| **主 Widget** | CalendarWidget.php        | 200-250 行 | 核心行事曆功能和互動處理 |
-| **服務類**    | CalendarEventService.php  | 100-150 行 | 事件和資源查詢管理       |
-| **服務類**    | CalendarViewService.php   | 50-100 行  | 視圖配置和行動裝置檢測   |
-| **服務類**    | CalendarActionService.php | 150-200 行 | 動作定義和事件處理       |
-| **Trait**     | HasCalendarEvents.php     | 20-30 行   | 事件管理方法封裝         |
-| **Trait**     | HasCalendarActions.php    | 20-30 行   | 動作管理方法封裝         |
-| **Trait**     | HasCalendarViews.php      | 15-25 行   | 視圖管理方法封裝         |
-| **Trait**     | HasCalendarFilters.php    | 10-20 行   | 篩選管理方法封裝         |
+| 檔案類型      | 檔案名稱           | 實際行數 | 職責範圍                 |
+| ------------- | ------------------ | -------- | ------------------------ |
+| **主 Widget** | CalendarWidget.php | 565 行   | 核心行事曆功能和互動處理 |
+| **模型**      | SchoolEvent.php    | 114 行   | 校務活動模型和行事曆接口 |
+| **模型**      | Course.php         | 99 行    | 課程模型和行事曆接口     |
+| **模型**      | Campus.php         | 93 行    | 校區模型和資源接口       |
+| **主題配置**  | theme.css          | 4 行     | Guava Calendar 樣式引入  |
 
 ### 2. 符合規範檢查
 
@@ -1069,13 +1296,13 @@ public function toCalendarResource(): CalendarResource
 
 -   **結構化配置**：所有 UI 通過 Action 和 Form 結構化配置
 -   **後端驅動**：無複雜前端模板，依賴 PHP 配置對象
--   **簡潔性**：每個檔案職責單一，易於維護
+-   **簡潔性**：Widget 整合所有功能，易於維護
 
 #### ✅ Filament 4.x 規範
 
 -   **標準方法**：實現 `getHeaderActions()` 和 `getNavigationLabel()`
 -   **組件整合**：使用 `CreateAction`、`EditAction` 等標準元件
--   **模組化設計**：使用 Trait 組織功能，符合 Filament 慣例
+-   **動作管理**：使用 `InteractsWithActions` 和 `InteractsWithForms`
 
 #### ✅ Guava Calendar 規範
 
@@ -1083,25 +1310,34 @@ public function toCalendarResource(): CalendarResource
 -   **互動回呼**：實現 `onEventClick`、`onEventDrop` 等必要方法
 -   **資料格式**：正確返回 `CalendarEvent` 和 `CalendarResource`
 
-### 3. 重構優勢
+### 3. 實際實現優勢
 
-#### 可維護性提升
+#### 功能完整性
 
--   **單一職責**：每個服務類專注於特定功能
--   **低耦合**：服務類之間依賴關係清晰
--   **高內聚**：相關功能集中在同一服務類中
-
-#### 可擴展性增強
-
--   **新功能添加**：可輕鬆新增服務類或 Trait
--   **功能修改**：修改特定功能不影響其他模組
--   **測試友好**：每個服務類可獨立測試
+-   **搜尋功能**：即時搜尋事件標題和描述
+-   **篩選功能**：按事件類型、校區、顯示狀態篩選
+-   **視圖切換**：支援月、週、日、列表視圖
+-   **互動操作**：拖放、調整大小、點擊事件
 
 #### 效能優化
 
--   **延遲載入**：服務類按需初始化
--   **查詢優化**：事件查詢邏輯集中管理
--   **快取支援**：可在服務類中實現快取機制
+-   **快取機制**：使用 60 秒快取提升查詢效能
+-   **查詢優化**：預載入關聯資料，避免 N+1 問題
+-   **條件查詢**：根據篩選條件動態構建查詢
+
+#### 使用者體驗
+
+-   **24 小時制**：時間顯示使用 24 小時制格式
+-   **固定週數**：月視圖固定顯示 6 週，保持版面一致
+-   **事件限制**：每天最多顯示 3 個事件，避免版面擁擠
+-   **即時更新**：搜尋和篩選即時生效
+
+#### 特殊功能
+
+-   **國定假日**：特殊紅色背景，全天顯示
+-   **校區顏色**：每個校區使用專屬顏色
+-   **上下文選單**：右鍵點擊提供快速操作
+-   **測試事件**：無事件時自動生成測試事件
 
 ---
 
@@ -1146,37 +1382,149 @@ public function createEventAction(): CreateAction
 
 ## 📊 資料填充
 
-### 1. 現有範例資料 Seeder
+### 1. 現有資料填充狀態
 
-**已根據業務模組創建完成！** 現有的 `CalendarSampleDataSeeder.php` 已經包含：
+**⚠️ 注意：目前專案中沒有專門的行事曆範例資料 Seeder**
 
-#### 校務活動範例資料
+專案中現有的 Seeder 檔案：
 
--   **開學典禮**：新學期開學典禮，歡迎所有學員
--   **舞蹈表演**：學員成果發表會
--   **家長座談會**：與家長討論學員學習狀況
+-   `AdminRoleSeeder.php` - 管理員角色資料
+-   `AdminUserSeeder.php` - 管理員用戶資料
+-   `DatabaseSeeder.php` - 主要資料填充
+-   `NationalHolidaySeeder.php` - 國定假日資料
+-   `SystemSettingSeeder.php` - 系統設定資料
 
-#### 課程範例資料
+### 2. 建議建立行事曆範例資料
 
--   **兒童芭蕾**：初級課程，價格 1200 元
--   **現代舞**：中級課程，價格 1500 元
--   **民族舞**：高級課程，價格 1800 元
+為了測試行事曆功能，建議建立 `CalendarSampleDataSeeder.php`：
 
-#### 特色功能
+```php
+<?php
 
--   **校區關聯**：所有事件都關聯到對應校區
--   **時間範圍**：2025 年 9 月 1 日至 11 月 30 日
--   **工作時間**：上午 9 點至下午 6 點
--   **隨機生成**：時間和學員數量隨機生成
+namespace Database\Seeders;
 
-### 2. 執行資料填充
+use Illuminate\Database\Seeder;
+use App\Models\SchoolEvent;
+use App\Models\Course;
+use App\Models\Campus;
+use Carbon\Carbon;
+
+class CalendarSampleDataSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // 獲取所有活躍校區
+        $campuses = Campus::where('is_active', true)->get();
+
+        if ($campuses->isEmpty()) {
+            $this->command->warn('沒有找到活躍校區，請先建立校區資料');
+            return;
+        }
+
+        // 為每個校區建立範例資料
+        foreach ($campuses as $campus) {
+            $this->createSampleSchoolEvents($campus);
+            $this->createSampleCourses($campus);
+        }
+
+        $this->command->info('行事曆範例資料建立完成！');
+    }
+
+    private function createSampleSchoolEvents(Campus $campus): void
+    {
+        $events = [
+            [
+                'title' => $campus->name . ' - 開學典禮',
+                'description' => '新學期開學典禮，歡迎所有學員',
+                'category' => 'school_anniversary',
+                'location' => $campus->name . ' 大廳',
+            ],
+            [
+                'title' => $campus->name . ' - 舞蹈表演',
+                'description' => '學員成果發表會',
+                'category' => 'other',
+                'location' => $campus->name . ' 表演廳',
+            ],
+            [
+                'title' => $campus->name . ' - 家長座談會',
+                'description' => '與家長討論學員學習狀況',
+                'category' => 'meeting',
+                'location' => $campus->name . ' 會議室',
+            ],
+        ];
+
+        foreach ($events as $eventData) {
+            $startTime = Carbon::now()->addDays(rand(1, 30))->setHour(rand(9, 17))->setMinute(0);
+            $endTime = $startTime->copy()->addHours(rand(1, 3));
+
+            SchoolEvent::create([
+                'title' => $eventData['title'],
+                'description' => $eventData['description'],
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'location' => $eventData['location'],
+                'category' => $eventData['category'],
+                'status' => 'active',
+                'campus_id' => $campus->id,
+                'created_by' => 1,
+            ]);
+        }
+    }
+
+    private function createSampleCourses(Campus $campus): void
+    {
+        $courses = [
+            [
+                'name' => $campus->name . ' - 兒童芭蕾',
+                'description' => '兒童芭蕾基礎課程',
+                'level' => 'beginner',
+                'price' => 1200,
+            ],
+            [
+                'name' => $campus->name . ' - 現代舞',
+                'description' => '現代舞中級課程',
+                'level' => 'intermediate',
+                'price' => 1500,
+            ],
+            [
+                'name' => $campus->name . ' - 民族舞',
+                'description' => '民族舞高級課程',
+                'level' => 'advanced',
+                'price' => 1800,
+            ],
+        ];
+
+        foreach ($courses as $courseData) {
+            $startTime = Carbon::now()->addDays(rand(1, 30))->setHour(rand(9, 17))->setMinute(0);
+            $endTime = $startTime->copy()->addHours(1);
+
+            Course::create([
+                'name' => $courseData['name'],
+                'description' => $courseData['description'],
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'level' => $courseData['level'],
+                'price' => $courseData['price'],
+                'student_count' => rand(8, 20),
+                'is_active' => true,
+                'campus_id' => $campus->id,
+            ]);
+        }
+    }
+}
+```
+
+### 3. 執行資料填充
 
 ```bash
+# 建立行事曆範例資料 Seeder
+php artisan make:seeder CalendarSampleDataSeeder
+
 # 執行行事曆範例資料填充
 php artisan db:seed --class=CalendarSampleDataSeeder
 ```
 
-### 3. 資料結構說明
+### 4. 資料結構說明
 
 ```php
 // 校務活動資料結構
@@ -1186,7 +1534,7 @@ SchoolEvent::create([
     'start_time' => $startTime,
     'end_time' => $endTime,
     'location' => $campus->name . ' 大廳',
-    'category' => 'meeting',
+    'category' => 'school_anniversary',
     'status' => 'active',
     'campus_id' => $campus->id,
     'created_by' => 1,
@@ -1195,7 +1543,7 @@ SchoolEvent::create([
 // 課程資料結構
 Course::create([
     'name' => $campus->name . ' - 兒童芭蕾',
-    'description' => '兒童芭蕾課程',
+    'description' => '兒童芭蕾基礎課程',
     'start_time' => $startTime,
     'end_time' => $endTime,
     'level' => 'beginner',
@@ -1639,6 +1987,25 @@ protected function getEvents(FetchInfo $info): Collection|array|Builder
 | 1.2  | 2025-01-17 | 移除自訂義，專注現有功能                 |
 | 1.3  | 2025-01-17 | 新增校區篩選和校區顏色功能               |
 | 1.4  | 2025-01-17 | 重構架構，符合 SDUI 和 Filament 4.x 規範 |
+| 1.5  | 2025-01-17 | 實際實現完成，功能完整                   |
+
+### 當前實現狀態
+
+**✅ 已完成功能：**
+
+-   [x] 基本行事曆顯示（月、週、日、列表視圖）
+-   [x] 校務活動和課程事件顯示
+-   [x] 校區資源分組顯示
+-   [x] 事件拖放和調整大小
+-   [x] 即時搜尋功能
+-   [x] 多條件篩選（事件類型、校區、顯示狀態）
+-   [x] 視圖切換功能
+-   [x] 上下文選單操作
+-   [x] 24 小時制時間顯示
+-   [x] 國定假日特殊顯示
+-   [x] 校區顏色系統
+-   [x] 快取機制優化
+-   [x] 測試事件自動生成
 
 ### 未來規劃
 
@@ -1647,6 +2014,9 @@ protected function getEvents(FetchInfo $info): Collection|array|Builder
 -   [ ] 行事曆匯出功能
 -   [ ] 行動裝置優化
 -   [ ] 與現有 Filament 資源深度整合
+-   [ ] 行事曆範例資料 Seeder
+-   [ ] 事件衝突檢測
+-   [ ] 批量事件操作
 
 ---
 
@@ -1680,4 +2050,4 @@ protected function getEvents(FetchInfo $info): Collection|array|Builder
 ---
 
 _最後更新：2025 年 1 月 17 日_  
-_版本：1.4 - Guava Calendar 2.x + Filament 4.x + 重構架構 + SDUI 規範_
+_版本：1.5 - Guava Calendar 2.x + Filament 4.x + 實際實現完成 + 功能完整_

@@ -3,8 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Role;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -33,10 +35,20 @@ class DatabaseSeeder extends Seeder
             NationalHolidaySeeder::class,
         ]);
 
-        // 建立測試用戶
-        User::factory()->create([
-            'name' => '測試用戶',
-            'email' => 'test@example.com',
+        // 建立國安國小校務事件
+        $this->call([
+            GuoanSchoolEventSeeder::class,
         ]);
+
+        // 建立測試用戶（如果不存在則建立）
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => '測試用戶',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'role_id' => Role::where('name', '學生')->first()?->id ?? 1,
+            ]
+        );
     }
 }

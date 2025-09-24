@@ -124,4 +124,14 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Course::class, 'user_course');
     }
+
+    /**
+     * 可以授課的用戶Scope（管理員、行政助理、老師）
+     */
+    public function scopeCanTeach($query)
+    {
+        return $query->whereHas('role', function ($roleQuery) {
+            $roleQuery->whereIn('name', ['管理員', '行政助理', '老師', '教師', 'admin', 'teacher', 'assistant']);
+        });
+    }
 }

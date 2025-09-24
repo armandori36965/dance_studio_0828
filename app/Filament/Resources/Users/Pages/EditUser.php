@@ -70,4 +70,13 @@ class EditUser extends EditRecord
     }
 
     private array $courseIds = [];
+
+    /**
+     * 編輯完成後的跳轉 URL
+     */
+    protected function getRedirectUrl(): string
+    {
+        // 編輯完成後跳轉到用戶列表頁面
+        return $this->getResource()::getUrl('index');
+    }
 }

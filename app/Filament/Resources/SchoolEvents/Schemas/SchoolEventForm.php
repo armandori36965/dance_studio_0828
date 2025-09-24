@@ -21,18 +21,35 @@ class SchoolEventForm
     {
         return $schema
             ->components([
-                TextInput::make('title')
-                    ->label(__('fields.event_title'))
-                    ->required()
-                    ->maxLength(255),
+                Select::make('category')
+                    ->label(__('fields.event_type'))
+                    ->searchable()
+                    ->placeholder(__('fields.select_type'))
+                    ->options([
+                        'todo' => __('fields.todo'),
+                        'school' => __('fields.school'),
+                        'other' => __('fields.other'),
+                        'national_holiday' => __('fields.national_holiday'),
+                    ])
+                    ->required(),
+
+                Select::make('campus_id')
+                    ->label('校區')
+                    ->options(function () {
+                        return Campus::orderBy('sort_order', 'asc')
+                            ->pluck('name', 'id');
+                    })
+                    ->searchable()
+                    ->placeholder('請選擇校區')
+                    ->helperText('留空表示此事件為國定假日，適用於所有校區'),
 
                 Textarea::make('description')
-                    ->label(__('fields.event_description'))
+                    ->label('事件描述')
                     ->maxLength(1000)
                     ->columnSpanFull(),
 
                 DateTimePicker::make('start_time')
-                    ->label(__('fields.start_time'))
+                    ->label('開始時間')
                     ->required()
                     ->default(Carbon::now())
                     ->seconds(false)
@@ -51,7 +68,7 @@ class SchoolEventForm
                     }),
 
                 DateTimePicker::make('end_time')
-                    ->label(__('fields.end_time'))
+                    ->label('結束時間')
                     ->required()
                     ->default(Carbon::now()->addHour())
                     ->seconds(false)
@@ -62,30 +79,6 @@ class SchoolEventForm
                     ->native(false)
                     ->after('start_time')
                     ->rules(['after:start_time']),
-
-                Select::make('category')
-                    ->label(__('fields.event_type'))
-                    ->searchable()
-                    ->placeholder(__('fields.select_type'))
-                    ->options([
-                        'national_holiday' => __('fields.national_holiday'),
-                        'periodic_assessment' => __('fields.periodic_assessment'),
-                        'disaster_drill' => __('fields.disaster_drill'),
-                        'school_anniversary' => __('fields.school_anniversary'),
-                        'todo' => __('fields.todo'),
-                        'other' => __('fields.other'),
-                    ])
-                    ->required(),
-
-                Select::make('campus_id')
-                    ->label(__('fields.campus_name'))
-                    ->options(function () {
-                        return Campus::orderBy('sort_order', 'asc')
-                            ->pluck('name', 'id');
-                    })
-                    ->searchable()
-                    ->placeholder(__('fields.select_campus'))
-                    ->helperText('留空表示此事件為國定假日，適用於所有校區'),
 
 
 

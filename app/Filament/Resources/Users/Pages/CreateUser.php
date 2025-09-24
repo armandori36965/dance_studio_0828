@@ -34,4 +34,13 @@ class CreateUser extends CreateRecord
     }
 
     private array $courseIds = [];
+
+    /**
+     * 新增完成後的跳轉 URL
+     */
+    protected function getRedirectUrl(): string
+    {
+        // 新增完成後跳轉到用戶列表頁面
+        return $this->getResource()::getUrl('index');
+    }
 }

@@ -23,12 +23,12 @@ class SchoolEventInfolist
                 // 開始時間
                 TextEntry::make('start_time')
                     ->label('開始時間')
-                    ->dateTime(),
+                    ->dateTime('Y-m-d H:i'), // 使用24小時制格式
 
                 // 結束時間
                 TextEntry::make('end_time')
                     ->label('結束時間')
-                    ->dateTime(),
+                    ->dateTime('Y-m-d H:i'), // 使用24小時制格式
 
                 // 事件類型
                 TextEntry::make('category')
@@ -71,12 +71,12 @@ class SchoolEventInfolist
                 // 建立時間
                 TextEntry::make('created_at')
                     ->label('建立時間')
-                    ->dateTime(),
+                    ->dateTime('Y-m-d H:i'), // 使用24小時制格式
 
                 // 更新時間
                 TextEntry::make('updated_at')
                     ->label('更新時間')
-                    ->dateTime(),
+                    ->dateTime('Y-m-d H:i'), // 使用24小時制格式
             ]);
     }
 }

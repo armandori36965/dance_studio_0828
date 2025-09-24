@@ -88,12 +88,12 @@ class UserInfolist
                 // 建立時間
                 TextEntry::make('created_at')
                     ->label(__('fields.created_at'))
-                    ->dateTime(),
+                    ->dateTime('Y-m-d H:i'), // 使用24小時制格式
 
                 // 更新時間
                 TextEntry::make('updated_at')
                     ->label(__('fields.updated_at'))
-                    ->dateTime(),
+                    ->dateTime('Y-m-d H:i'), // 使用24小時制格式
             ]);
     }
 }
