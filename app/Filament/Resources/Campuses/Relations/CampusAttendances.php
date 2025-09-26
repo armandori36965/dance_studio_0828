@@ -32,7 +32,7 @@ class CampusAttendances extends RelationManager
             ->headerActions([
                 CreateAction::make()
                     ->label(__('fields.add'))
-                    ->modalHeading('建立出勤記錄')
+                    ->modalHeading('建立差勤記錄')
                     ->form(fn (Schema $form) => AttendanceForm::configure($form))
                     ->fillForm([
                         'campus_id' => $this->getOwnerRecord()->id,

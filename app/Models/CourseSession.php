@@ -21,6 +21,7 @@ class CourseSession extends Model implements Eventable
         'notes',
         'sort_order',
         'teacher_id',
+        'assistant_id',
     ];
 
     protected $casts = [
@@ -38,6 +39,12 @@ class CourseSession extends Model implements Eventable
     public function teacher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    // 與助教的關係
+    public function assistant(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assistant_id');
     }
 
     /**

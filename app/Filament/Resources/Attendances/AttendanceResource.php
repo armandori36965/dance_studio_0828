@@ -24,13 +24,13 @@ class AttendanceResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
     // 設定導航標籤
-    protected static ?string $navigationLabel = '出勤';
+    protected static ?string $navigationLabel = '差勤';
 
     // 設定模型標籤（單數）
-    protected static ?string $modelLabel = '出勤';
+    protected static ?string $modelLabel = '差勤';
 
     // 設定模型標籤（複數）
-    protected static ?string $pluralModelLabel = '出勤';
+    protected static ?string $pluralModelLabel = '差勤';
 
     // 設定排序順序
     protected static ?int $navigationSort = 5;

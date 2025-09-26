@@ -29,17 +29,17 @@ class CleanEventTitles extends Command
     {
         $this->info('開始清理事件標題...');
 
-        // 清理校務活動標題
-        $events = SchoolEvent::where('title', 'like', '% - %')->get();
+        // 清理校務活動描述
+        $events = SchoolEvent::where('description', 'like', '% - %')->get();
         $this->info("找到 {$events->count()} 個包含校區名稱的校務活動");
 
         foreach ($events as $event) {
-            $parts = explode(' - ', $event->title, 2);
+            $parts = explode(' - ', $event->description, 2);
             if (count($parts) == 2) {
-                $oldTitle = $event->title;
-                $event->title = $parts[1];
+                $oldDescription = $event->description;
+                $event->description = $parts[1];
                 $event->save();
-                $this->line("校務活動 ID {$event->id}: '{$oldTitle}' -> '{$event->title}'");
+                $this->line("校務活動 ID {$event->id}: '{$oldDescription}' -> '{$event->description}'");
             }
         }
 

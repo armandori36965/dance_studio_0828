@@ -71,13 +71,13 @@ class CampusesTable
                 // 建立時間 - 隱藏
                 TextColumn::make('created_at')
                     ->label(__('fields.created_at'))
-                    ->dateTime('Y-m-d H:i:s')
+                    ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 // 更新時間 - 隱藏
                 TextColumn::make('updated_at')
                     ->label(__('fields.updated_at'))
-                    ->dateTime('Y-m-d H:i:s')
+                    ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

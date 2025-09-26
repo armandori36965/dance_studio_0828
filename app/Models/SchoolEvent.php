@@ -15,7 +15,6 @@ class SchoolEvent extends Model implements Eventable
 
     // 可填充欄位
     protected $fillable = [
-        'title',           // 事件標題
         'description',     // 事件描述
         'start_time',      // 開始時間
         'end_time',        // 結束時間

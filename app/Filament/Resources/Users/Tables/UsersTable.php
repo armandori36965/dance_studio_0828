@@ -25,20 +25,15 @@ class UsersTable
                     ->searchable()
                     ->sortable(),
 
-                // 電子郵件欄位
-                TextColumn::make('email')
-                    ->label(__('fields.email'))
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                // 角色欄位
-                TextColumn::make('role.name')
-                    ->label(__('fields.role'))
+                // 班級欄位
+                TextColumn::make('class')
+                    ->label('班級')
                     ->searchable()
                     ->sortable()
                     ->badge()
-                    ->color('primary'),
+                    ->color('info')
+                    ->toggleable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 // 校區欄位
                 TextColumn::make('campus.name')
@@ -48,14 +43,19 @@ class UsersTable
                     ->badge()
                     ->color('success'),
 
-                // 班級欄位
-                TextColumn::make('class')
-                    ->label('班級')
+                // 角色欄位
+                TextColumn::make('role.name')
+                    ->label(__('fields.role'))
                     ->searchable()
                     ->sortable()
                     ->badge()
-                    ->color('info')
-                    ->toggleable()
+                    ->color('primary'),
+
+                // 電子郵件欄位
+                TextColumn::make('email')
+                    ->label(__('fields.email'))
+                    ->searchable()
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 // 學校課程欄位
@@ -164,10 +164,9 @@ class UsersTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->extremePaginationLinks() // 顯示第一頁和最後一頁按鈕
+            ->extremePaginationLinks() // 改善分頁顯示
             ->paginated([10, 25, 50, 100]) // 設定每頁顯示筆數選項
             ->defaultPaginationPageOption(10) // 預設每頁顯示10筆
-            ->paginationPageOptions([10, 25, 50, 100]) // 確保分頁選項正確設定
             ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc');
     }

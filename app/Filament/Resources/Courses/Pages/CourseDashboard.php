@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Courses\Pages;
 
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\Courses\Relations\CourseSessions;
+use App\Filament\Resources\Courses\Schemas\CourseInfolist;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Schema;
 use Filament\Actions\Action;
@@ -39,10 +40,10 @@ class CourseDashboard extends EditRecord
         ];
     }
 
-    // 移除課程詳情顯示
+    // 顯示課程基本資訊
     public function infolist(Schema $schema): Schema
     {
-        return $schema->components([]);
+        return CourseInfolist::configure($schema);
     }
 
     // 移除表單顯示

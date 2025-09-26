@@ -58,14 +58,10 @@ class UserForm
                     })
                     ->columnSpan(1),
 
-                // 第三列：緊急聯絡人姓名*(選學生時) 緊急聯絡人電話*(選學生時)
+                // 第三列：緊急聯絡人姓名(選學生時) 緊急聯絡人電話(選學生時)
                 TextInput::make('emergency_contact_name')
                     ->label('緊急聯絡人姓名')
                     ->visible(fn (callable $get, $record) =>
-                        self::isStudentRole($get('role_id')) ||
-                        ($record && self::isStudentRole($record->role_id))
-                    )
-                    ->required(fn (callable $get, $record) =>
                         self::isStudentRole($get('role_id')) ||
                         ($record && self::isStudentRole($record->role_id))
                     )
@@ -74,10 +70,6 @@ class UserForm
                     ->label('緊急聯絡人電話')
                     ->tel()
                     ->visible(fn (callable $get, $record) =>
-                        self::isStudentRole($get('role_id')) ||
-                        ($record && self::isStudentRole($record->role_id))
-                    )
-                    ->required(fn (callable $get, $record) =>
                         self::isStudentRole($get('role_id')) ||
                         ($record && self::isStudentRole($record->role_id))
                     )

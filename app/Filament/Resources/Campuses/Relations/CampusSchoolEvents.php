@@ -82,7 +82,9 @@ class CampusSchoolEvents extends RelationManager
                         $this->getOwnerRecord()->schoolEvents()->create($data);
                     }),
             ])
-            ->paginated([10, 25, 50])
-            ->defaultPaginationPageOption(25);
+            ->extremePaginationLinks() // 改善分頁顯示
+            ->paginated([10, 25, 50, 100]) // 設定每頁顯示筆數選項
+            ->defaultPaginationPageOption(10) // 預設每頁顯示10筆
+;
     }
 }

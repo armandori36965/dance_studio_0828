@@ -203,26 +203,42 @@ class CalendarWidget extends BaseCalendarWidget implements HasActions
                 ->color('gray')
                 ->form([
                     Toggle::make('showSchoolEvents')
-                        ->label('顯示校務事件')
+                        ->label('顯示事件')
                         ->default($this->showSchoolEvents),
                     Toggle::make('showCourses')
                         ->label('顯示課程')
                         ->default($this->showCourses),
                     Select::make('category')
                         ->label('事件類型')
-                        ->options([
-                            '' => '全部',
-                            'national_holiday' => '國定假日',
-                            'periodic_assessment' => '定期評量',
-                            'disaster_drill' => '防災演練',
-                            'school_anniversary' => '校慶活動',
-                            'todo' => '代辦事項',
-                            'other' => '其他',
-                        ])
+                        ->options(function () {
+                            // 動態獲取資料庫中實際存在的事件類型
+                            $categories = \App\Models\SchoolEvent::select('category')
+                                ->distinct()
+                                ->whereNotNull('category')
+                                ->pluck('category')
+                                ->filter()
+                                ->mapWithKeys(function ($category) {
+                                    return [$category => match ($category) {
+                                        'todo' => '代辦事項',
+                                        'school' => '校務',
+                                        'other' => '其他',
+                                        'national_holiday' => '國定假日',
+                                        default => $category,
+                                    }];
+                                })
+                                ->sort();
+
+                            return ['' => '全部'] + $categories->toArray();
+                        })
                         ->default($this->filterData['category']),
                     Select::make('campus_id')
                         ->label('校區')
-                        ->options(Campus::pluck('name', 'id'))
+                        ->options(function () {
+                            // 動態獲取校區，按排序欄位排序
+                            return ['' => '全部校區'] + \App\Models\Campus::orderBy('sort_order', 'asc')
+                                ->pluck('name', 'id')
+                                ->toArray();
+                        })
                         ->searchable()
                         ->default($this->filterData['campus_id']),
                 ])
@@ -289,13 +305,13 @@ class CalendarWidget extends BaseCalendarWidget implements HasActions
 
         // 建立快取鍵，包含日期範圍和過濾狀態以確保數據準確性
         $searchTerm = $this->tableSearch ?: $this->filterData['search'];
-        $cacheKey = 'calendar_events_' . $info->start->format('Y-m-d') . '_' . $info->end->format('Y-m-d') .
+        $cacheKey = 'calendar_events_v2_' . $info->start->format('Y-m-d') . '_' . $info->end->format('Y-m-d') .
                    '_school_' . ($this->showSchoolEvents ? '1' : '0') .
                    '_courses_' . ($this->showCourses ? '1' : '0') .
                    '_search_' . md5($searchTerm) .
                    '_category_' . $this->filterData['category'] .
                    '_campus_' . $this->filterData['campus_id'] .
-                   '_sessions'; // 加入 sessions 標識
+                   '_holidays_always'; // 國定假日始終顯示標識
 
         return Cache::remember($cacheKey, 10, function () use ($info) {
             // 調試：記錄過濾狀態
@@ -307,10 +323,34 @@ class CalendarWidget extends BaseCalendarWidget implements HasActions
 
             $events = collect();
 
-            // 查詢校務事件（根據過濾設定）
+            // 國定假日始終顯示，不受「顯示事件」開關影響
+            $nationalHolidaysQuery = SchoolEvent::query()
+                ->where('status', 'active')
+                ->where('category', 'national_holiday')
+                ->where(function ($query) use ($info) {
+                    $query->where('start_time', '<=', $info->end)
+                          ->where('end_time', '>=', $info->start);
+                })
+                ->with('campus');
+
+            // 對國定假日也應用搜尋篩選（如果有）
+            $searchTerm = $this->tableSearch ?: $this->filterData['search'];
+            if (!empty($searchTerm)) {
+                $nationalHolidaysQuery->where(function ($query) use ($searchTerm) {
+                    $query->where('description', 'like', "%{$searchTerm}%")
+                          ->orWhere('location', 'like', "%{$searchTerm}%");
+                });
+            }
+
+            // 國定假日不受校區篩選影響（因為是全國性的）
+            $nationalHolidays = $nationalHolidaysQuery->get();
+            $events = $events->merge($nationalHolidays);
+
+            // 查詢其他校務事件（根據過濾設定）
             if ($this->showSchoolEvents) {
                 $schoolEventsQuery = SchoolEvent::query()
                     ->where('status', 'active')
+                    ->where('category', '!=', 'national_holiday') // 排除國定假日，因為已經單獨處理
                     ->where(function ($query) use ($info) {
                         $query->where('start_time', '<=', $info->end)
                               ->where('end_time', '>=', $info->start);
@@ -318,11 +358,10 @@ class CalendarWidget extends BaseCalendarWidget implements HasActions
                     ->with('campus');
 
                 // 應用搜尋篩選
-                $searchTerm = $this->tableSearch ?: $this->filterData['search'];
                 if (!empty($searchTerm)) {
                     $schoolEventsQuery->where(function ($query) use ($searchTerm) {
-                        $query->where('title', 'like', "%{$searchTerm}%")
-                              ->orWhere('description', 'like', "%{$searchTerm}%");
+                        $query->where('description', 'like', "%{$searchTerm}%")
+                              ->orWhere('location', 'like', "%{$searchTerm}%");
                     });
                 }
 

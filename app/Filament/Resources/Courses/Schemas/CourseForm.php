@@ -60,8 +60,10 @@ class CourseForm
                     ->numeric()
                     ->required()
                     ->default(1)
+                    ->step(0.5)
+                    ->minValue(0.5)
                     ->suffix('小時')
-                    ->helperText('每堂課的時數')
+                    ->helperText('每堂課的時數（以0.5小時為單位）')
                     ->columnSpan(1),
 
                 // 第四行：授課老師 助教
@@ -120,20 +122,22 @@ class CourseForm
                 DateTimePicker::make('start_time')
                     ->label('開始時間')
                     ->required()
-                    ->default(Carbon::today()->setTime(7, 0))
+                    ->default(Carbon::now('Asia/Taipei')->setTime(7, 0))
                     ->seconds(false)
                     ->firstDayOfWeek(1)
                     ->locale('zh_TW')
                     ->displayFormat('Y-m-d H:i')
                     ->format('Y-m-d H:i:s')
                     ->native(false)
+                    ->timezone('Asia/Taipei')
                     ->columnSpan(1)
                     ->dehydrated(true) // 總是儲存
                     ->live()
                     ->afterStateUpdated(function ($state, callable $set) {
                         // 當開始時間改變時，自動設定結束時間為開始時間後1小時
                         if ($state) {
-                            $endTime = Carbon::parse($state)->addHour();
+                            // 確保使用正確的時區解析
+                            $endTime = Carbon::parse($state, 'Asia/Taipei')->addHour();
                             $set('end_time', $endTime->format('Y-m-d H:i:s'));
                         }
                     }),
@@ -141,21 +145,22 @@ class CourseForm
                 DateTimePicker::make('end_time')
                     ->label('結束時間')
                     ->required()
-                    ->default(Carbon::today()->setTime(8, 0))
+                    ->default(Carbon::now('Asia/Taipei')->setTime(8, 0))
                     ->seconds(false)
                     ->firstDayOfWeek(1)
                     ->locale('zh_TW')
                     ->displayFormat('Y-m-d H:i')
                     ->format('Y-m-d H:i:s')
                     ->native(false)
+                    ->timezone('Asia/Taipei')
                     ->after('start_time')
                     ->rules(['after:start_time'])
                     ->columnSpan(1)
                     ->dehydrated(true), // 總是儲存
 
-                // 避開的校務事件
+                // 避開的校務事件類型（預設避開國定假日和校務）
                 CheckboxList::make('avoid_event_types')
-                    ->label('避開的校務事件類型')
+                    ->label('避開的事件類型')
                     ->options([
                         'todo' => '代辦事項',
                         'school' => '校務',

@@ -68,6 +68,15 @@ class CourseSessions extends RelationManager
                     ->searchable()
                     ->preload(),
 
+                Select::make('assistant_id')
+                    ->label('助教')
+                    ->relationship('assistant', 'name',
+                        modifyQueryUsing: fn ($query) => $query->canTeach()->orderBy('name', 'asc')
+                    )
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('選擇助教'),
+
                 Select::make('status')
                     ->label('狀態')
                     ->options([
@@ -86,9 +95,9 @@ class CourseSessions extends RelationManager
             ->modifyQueryUsing(fn ($query) => $query
                 ->select([
                     'id', 'course_id', 'session_number', 'start_time',
-                    'end_time', 'status', 'created_at', 'sort_order', 'teacher_id'
+                    'end_time', 'status', 'created_at', 'sort_order', 'teacher_id', 'assistant_id'
                 ]) // 只查詢需要的欄位
-                ->with('teacher:id,name') // 預載老師資料
+                ->with(['teacher:id,name', 'assistant:id,name']) // 預載老師和助教資料
                 ->orderBy('sort_order', 'asc') // 預設排序，利用索引
             )
             ->columns([
@@ -104,6 +113,12 @@ class CourseSessions extends RelationManager
 
                 TextColumn::make('teacher.name')
                     ->label('授課老師')
+                    ->sortable()
+                    ->searchable()
+                    ->default('未指定'),
+
+                TextColumn::make('assistant.name')
+                    ->label('助教')
                     ->sortable()
                     ->searchable()
                     ->default('未指定'),
@@ -195,13 +210,11 @@ class CourseSessions extends RelationManager
                         ->label('刪除所選的項目'),
                 ]),
             ])
-            ->extremePaginationLinks() // 顯示第一頁和最後一頁按鈕
-            ->paginated([10, 20, 30, 50]) // 調整分頁選項，提高預設值
-            ->defaultPaginationPageOption(20) // 提高預設每頁顯示筆數
-            ->paginationPageOptions([10, 20, 30, 50]) // 確保分頁選項正確設定
+            ->extremePaginationLinks() // 改善分頁顯示
+            ->paginated([10, 25, 50, 100]) // 設定每頁顯示筆數選項
+            ->defaultPaginationPageOption(10) // 預設每頁顯示10筆
             ->reorderable('sort_order')
-            ->defaultSort('sort_order', 'asc')
-            ->deferLoading(); // 延遲載入，提高初始頁面載入速度
+            ->defaultSort('sort_order', 'asc');
     }
 
     // 啟用批量選擇功能
